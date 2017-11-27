@@ -1,13 +1,14 @@
 {
   "name": "ffi",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "license": "MIT",
-  "author": "Rick Branson",
+  "author": "Anna Henningsen <anna@addaleax.net>",
   "contributors": [
-    "Nathan Rajlich <nathan@tootallnate.net> (http://tootallnate.net)",
-    "Gabor Mezo <gabor.mezo@outlook.com> (https://github.com/unbornchikken)"
+    "Rick Branson <rick@diodeware.com>",
+    "Nathan Rajlich <nathan@tootallnate.net>",
+    "Gabor Mezo <gabor.mezo@outlook.com>"
   ],
-  "description": "A foreign function interface (FFI) for Node.js",
+  "description": "A foreign function interface (FFI) for Node.js, N-API style",
   "keywords": [
     "foreign",
     "function",
@@ -15,9 +16,11 @@
     "ffi",
     "libffi",
     "binding",
-    "c"
+    "c",
+    "napi",
+    "stable"
   ],
-  "homepage": "http://github.com/node-ffi/node-ffi",
+  "homepage": "http://github.com/node-ffi-napi/node-ffi-napi",
   "engines": {
     "node": ">=0.10.0"
   },
