@@ -29,7 +29,7 @@
 #define THROW_ERROR_EXCEPTION(x) Nan::ThrowError(x)
 #define THROW_ERROR_EXCEPTION_WITH_STATUS_CODE(x, y) Nan::ThrowError(x)
 
-#define FFI_ASYNC_ERROR (ffi_status)1
+#define FFI_ASYNC_ERROR static_cast<ffi_status>(1)
 
 using namespace v8;
 using namespace node;
@@ -37,16 +37,8 @@ using namespace node;
 /*
  * Converts an arbitrary pointer to a node Buffer with 0-length
  */
-
-void wrap_pointer_cb(char *data, void *hint);
-
-inline Local<Value> WrapPointer(char *ptr, size_t length) {
-  Nan::EscapableHandleScope scope;
-  return scope.Escape(Nan::NewBuffer(ptr, length, wrap_pointer_cb, NULL).ToLocalChecked());
-}
-
-inline Local<Value> WrapPointer(char *ptr) {
-  return WrapPointer(ptr, 0);
+inline Local<Value> WrapPointer(char* ptr, size_t length = 0) {
+  return Nan::NewBuffer(ptr, length, [](char*,void*){}, nullptr).ToLocalChecked();
 }
 
 /*
@@ -56,12 +48,12 @@ inline Local<Value> WrapPointer(char *ptr) {
 class AsyncCallParams {
   public:
     ffi_status result;
-    char *err;
-    char *cif;
-    char *fn;
-    char *res;
-    char *argv;
-    Nan::Callback *callback;
+    char* err;
+    char* cif;
+    char* fn;
+    char* res;
+    char* argv;
+    Nan::Callback* callback;
 };
 
 class FFI {
@@ -74,8 +66,8 @@ class FFI {
     static NAN_METHOD(FFIPrepCifVar);
     static NAN_METHOD(FFICall);
     static NAN_METHOD(FFICallAsync);
-    static void AsyncFFICall(uv_work_t *req);
-    static void FinishAsyncFFICall(uv_work_t *req);
+    static void AsyncFFICall(uv_work_t* req);
+    static void FinishAsyncFFICall(uv_work_t* req, int status);
 
     static NAN_METHOD(Strtoul);
 };
@@ -90,7 +82,7 @@ class FFI {
 
 typedef struct _callback_info {
   ffi_closure closure;           // the actual `ffi_closure` instance get inlined
-  void *code;                    // the executable function pointer
+  void* code;                    // the executable function pointer
   Nan::Callback* errorFunction;    // JS callback function for reporting catched exceptions for the process' event loop
   Nan::Callback* function;         // JS callback function the closure represents
   // these two are required for creating proper sized WrapPointer buffer instances
@@ -103,22 +95,22 @@ class ThreadedCallbackInvokation;
 class CallbackInfo {
   public:
     static NAN_MODULE_INIT(Initialize);
-    static void WatcherCallback(uv_async_t *w, int revents);
+    static void WatcherCallback(uv_async_t* w);
 
   protected:
-    static void DispatchToV8(callback_info *self, void *retval, void **parameters, bool dispatched = false);
-    static void Invoke(ffi_cif *cif, void *retval, void **parameters, void *user_data);
+    static void DispatchToV8(callback_info* self, void* retval, void** parameters, bool dispatched = false);
+    static void Invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
     static NAN_METHOD(Callback);
 
   private:
 #ifdef WIN32
     static DWORD g_threadID;
 #else
-    static uv_thread_t          g_mainthread;
+    static uv_thread_t g_mainthread;
 #endif // WIN32
-    static uv_mutex_t    g_queue_mutex;
-    static std::queue<ThreadedCallbackInvokation *> g_queue;
-    static uv_async_t         g_async;
+    static uv_mutex_t g_queue_mutex;
+    static std::queue<ThreadedCallbackInvokation*> g_queue;
+    static uv_async_t g_async;
 };
 
 /**
@@ -132,15 +124,15 @@ class CallbackInfo {
 
 class ThreadedCallbackInvokation {
   public:
-    ThreadedCallbackInvokation(callback_info *cbinfo, void *retval, void **parameters);
+    ThreadedCallbackInvokation(callback_info* cbinfo, void* retval, void** parameters);
     ~ThreadedCallbackInvokation();
 
     void SignalDoneExecuting();
     void WaitForExecution();
 
-    void *m_retval;
-    void **m_parameters;
-    callback_info *m_cbinfo;
+    void* m_retval;
+    void** m_parameters;
+    callback_info* m_cbinfo;
 
   private:
     uv_cond_t m_cond;
