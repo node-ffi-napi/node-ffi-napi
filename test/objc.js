@@ -20,7 +20,7 @@ describe('@try / @catch', function () {
   // https://github.com/node-ffi/node-ffi/issues/195
   const lib = ffi.DynamicLibrary('/System/Library/Frameworks/Foundation.framework/Versions/Current/Foundation');
 
-  afterEach(gc);
+  afterEach(global.gc);
 
   const objcLib = new ffi.Library('libobjc', {
     'objc_msgSend': [ id, [ id, SEL ] ],

@@ -7,7 +7,7 @@ const ffi = require('../');
 const bindings = require('bindings')({ module_root: __dirname, bindings: 'ffi_tests' });
 
 describe('ForeignFunction', function () {
-  afterEach(gc);
+  afterEach(global.gc);
 
   // these structs are also defined in ffi_tests.cc
   const box = Struct({

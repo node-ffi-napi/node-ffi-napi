@@ -5,7 +5,7 @@ const ffi = require('../');
 const errno = ffi.errno;
 
 describe('errno()', function () {
-  afterEach(gc);
+  afterEach(global.gc);
 
   it('should be a function', function () {
     assert.strictEqual('function', typeof errno);

@@ -5,7 +5,7 @@ const ffi = require('../');
 const bindings = require('bindings')({ module_root: __dirname, bindings: 'ffi_tests' });
 
 describe('Function "type"', function () {
-  afterEach(gc);
+  afterEach(global.gc);
 
   it('should be a function', function () {
     assert.strictEqual('function', typeof ffi.Function);

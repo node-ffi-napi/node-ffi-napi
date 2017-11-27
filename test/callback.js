@@ -6,7 +6,7 @@ const int = ref.types.int;
 const bindings = require('bindings')({ module_root: __dirname, bindings: 'ffi_tests' });
 
 describe('Callback', function () {
-  afterEach(gc);
+  afterEach(global.gc);
 
   it('should create a C function pointer from a JS function', function () {
     const callback = ffi.Callback('void', [ ], function (val) { });
@@ -81,7 +81,7 @@ describe('Callback', function () {
     bindings.call_cb();
 
     cb = null; // Free the object for GC
-    gc();
+    global.gc();
 
     setImmediate(() => {
       // should throw an Error synchronously
@@ -108,9 +108,7 @@ describe('Callback', function () {
       // register the callback function
       bindings.set_cb(cb);
       return function () {
-        let c = cb;
         cb = null;
-        c = null;
       }
     })(cb);
 
@@ -125,13 +123,13 @@ describe('Callback', function () {
     setTimeout(function () {
       assert.strictEqual(2, invokeCount);
 
-      gc(); // ensure the outer "cb" Buffer is collected
+      global.gc(); // ensure the outer "cb" Buffer is collected
       process.nextTick(finish);
     }, 100);
 
     function finish () {
       kill();
-      gc(); // now ensure the inner "cb" Buffer is collected
+      global.gc(); // now ensure the inner "cb" Buffer is collected
 
       // should throw an Error asynchronously!,
       // because the callback has been garbage collected.
@@ -208,9 +206,7 @@ describe('Callback', function () {
         // register the callback function
         bindings.set_cb(cb);
         return function () {
-          let c = cb;
           cb = null;
-          c = null;
         }
       })(cb);
 
@@ -229,7 +225,7 @@ describe('Callback', function () {
         bindings.call_cb();
         assert.strictEqual(3, invokeCount);
 
-        gc(); // ensure the outer "cb" Buffer is collected
+        global.gc(); // ensure the outer "cb" Buffer is collected
         process.nextTick(finish);
       }, 25);
 
@@ -238,7 +234,7 @@ describe('Callback', function () {
         assert.strictEqual(4, invokeCount);
 
         kill();
-        gc(); // now ensure the inner "cb" Buffer is collected
+        global.gc(); // now ensure the inner "cb" Buffer is collected
 
         // should throw an Error synchronously
         try {
@@ -279,7 +275,7 @@ describe('Callback', function () {
       });
 
       cb = null;
-      gc();
+      global.gc();
 
       // should generate an "uncaughtException" asynchronously
       bindings.call_cb_async();

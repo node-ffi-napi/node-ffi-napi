@@ -8,7 +8,7 @@ const Library = ffi.Library
 describe('Library', function () {
   const charPtr = ref.refType(ref.types.char);
 
-  afterEach(gc);
+  afterEach(global.gc);
 
   it('should be a function', function () {
     assert(typeof Library === 'function');

@@ -6,7 +6,7 @@ const bindings = require('bindings')({ module_root: __dirname, bindings: 'ffi_te
 const sprintfPtr = bindings.sprintf;
 
 describe('variadic arguments', function () {
-  afterEach(gc);
+  afterEach(global.gc);
 
   it('should work with vararg C functions', function () {
     const buf = new Buffer(100);

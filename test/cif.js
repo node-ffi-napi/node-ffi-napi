@@ -4,7 +4,14 @@ const ref = require('ref');
 const ffi = require('../');
 
 describe('ffi_cif', function () {
-  afterEach(gc);
+  {
+    // Never garbage collect CIF structs during these tests.
+    let save;
+    beforeEach(() => save = process.env.DEBUG, process.env.DEBUG += ';ffi');
+    afterEach(() => process.env.DEBUG = save);
+  }
+
+  afterEach(global.gc);
 
   it('should return a Buffer representing the `ffi_cif` instance', function () {
     const cif = ffi.CIF(ref.types.void, [ ]);
