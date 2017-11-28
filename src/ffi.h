@@ -22,10 +22,6 @@
 
 #include <nan.h>
 
-#if __OBJC__ || __OBJC2__
-  #include <objc/objc.h>
-#endif
-
 #define THROW_ERROR_EXCEPTION(x) Nan::ThrowError(x)
 #define THROW_ERROR_EXCEPTION_WITH_STATUS_CODE(x, y) Nan::ThrowError(x)
 

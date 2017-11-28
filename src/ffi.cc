@@ -109,12 +109,6 @@ NAN_MODULE_INIT(FFI::InitializeBindings) {
   Nan::ForceSet(target,Nan::New<String>("FFI_TYPE_SIZE").ToLocalChecked(), Nan::New<Uint32>((uint32_t)sizeof(ffi_type)), static_cast<PropertyAttribute>(ReadOnly | DontDelete));
   Nan::ForceSet(target,Nan::New<String>("FFI_CIF_SIZE").ToLocalChecked(), Nan::New<Uint32>((uint32_t)sizeof(ffi_cif)), static_cast<PropertyAttribute>(ReadOnly | DontDelete));
 
-  bool hasObjc = false;
-#if __OBJC__ || __OBJC2__
-  hasObjc = true;
-#endif
-  Nan::ForceSet(target,Nan::New<String>("HAS_OBJC").ToLocalChecked(), Nan::New<Boolean>(hasObjc), static_cast<PropertyAttribute>(ReadOnly | DontDelete));
-
   Local<Object> ftmap = Nan::New<Object>();
   ftmap->Set(Nan::New<String>("void").ToLocalChecked(), WrapPointer((char*)&ffi_type_void));
   ftmap->Set(Nan::New<String>("uint8").ToLocalChecked(), WrapPointer((char*)&ffi_type_uint8));
@@ -255,20 +249,12 @@ NAN_METHOD(FFI::FFICall) {
   char* res = Buffer::Data(info[2]->ToObject());
   char* fnargs = Buffer::Data(info[3]->ToObject());
 
-#if __OBJC__ || __OBJC2__
-    @try {
-#endif
-      ffi_call(
-          reinterpret_cast<ffi_cif*>(cif),
-          FFI_FN(fn),
-          reinterpret_cast<void*>(res),
-          reinterpret_cast<void**>(fnargs)
-        );
-#if __OBJC__ || __OBJC2__
-    } @catch (id ex) {
-      return THROW_ERROR_EXCEPTION(WrapPointer((char*)ex));
-    }
-#endif
+  ffi_call(
+      reinterpret_cast<ffi_cif*>(cif),
+      FFI_FN(fn),
+      reinterpret_cast<void*>(res),
+      reinterpret_cast<void**>(fnargs)
+    );
 
   info.GetReturnValue().SetUndefined();
 }
@@ -316,21 +302,12 @@ NAN_METHOD(FFI::FFICallAsync) {
 void FFI::AsyncFFICall(uv_work_t *req) {
   AsyncCallParams* p = static_cast<AsyncCallParams*>(req->data);
 
-#if __OBJC__ || __OBJC2__
-  @try {
-#endif
-    ffi_call(
-      (ffi_cif *)p->cif,
-      FFI_FN(p->fn),
-      (void*)p->res,
-      (void **)p->argv
-    );
-#if __OBJC__ || __OBJC2__
-  } @catch (id ex) {
-    p->result = FFI_ASYNC_ERROR;
-    p->err = (char*)ex;
-  }
-#endif
+  ffi_call(
+    (ffi_cif *)p->cif,
+    FFI_FN(p->fn),
+    (void*)p->res,
+    (void **)p->argv
+  );
 }
 
 /*
