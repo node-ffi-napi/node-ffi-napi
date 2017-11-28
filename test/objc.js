@@ -1,6 +1,6 @@
 'use strict';
 const assert = require('assert');
-const ref = require('ref');
+const ref = require('ref-napi');
 const ffi = require('../');
 const voidPtr = ref.refType(ref.types.void);
 

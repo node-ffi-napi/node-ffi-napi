@@ -1,6 +1,6 @@
 'use strict';
-var assert = require('assert');
-const ref = require('ref');
+const assert = require('assert');
+const ref = require('ref-napi');
 const ffi = require('../');
 const bindings = require('bindings')({ module_root: __dirname, bindings: 'ffi_tests' });
 const sprintfPtr = bindings.sprintf;

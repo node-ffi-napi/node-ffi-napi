@@ -1,9 +1,9 @@
 'use strict';
-const assert = require('assert')
-const ref = require('ref')
-const Struct = require('ref-struct')
-const ffi = require('../')
-const Library = ffi.Library
+const assert = require('assert');
+const ref = require('ref-napi');
+const Struct = require('ref-struct-di')(ref);
+const ffi = require('../');
+const Library = ffi.Library;
 
 describe('Library', function () {
   const charPtr = ref.refType(ref.types.char);

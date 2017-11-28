@@ -46,22 +46,22 @@ UTF8toWCHAR(
     int outputSize;
     WCHAR* outputString;
 
-    outputSize = MultiByteToWideChar(CP_UTF8, 0, inputString, -1, nullptr, 0);
+    outputSize = MultiByteToWideChar(CP_UTF8, 0, inputString, -1, NULL, 0);
 
     if (outputSize == 0)
-        return nullptr;
+        return NULL;
 
     outputString = (WCHAR*) malloc(outputSize * sizeof(WCHAR));
 
-    if (outputString == nullptr) {
+    if (outputString == NULL) {
         SetLastError(ERROR_OUTOFMEMORY);
-        return nullptr;
+        return NULL;
     }
 
     if (MultiByteToWideChar(CP_UTF8, 0, inputString, -1, outputString, outputSize) != outputSize)
     {
         free(outputString);
-        return nullptr;
+        return NULL;
     }
 
     return outputString;
@@ -83,24 +83,24 @@ dlopen(
 
     UNREFERENCED_PARAMETER(mode);
 
-    if (file == nullptr)
-        return (void*) GetModuleHandle(nullptr);
+    if (file == NULL)
+        return (void*) GetModuleHandle(NULL);
 
     unicodeFilename = UTF8toWCHAR(file);
 
-    if (unicodeFilename == nullptr) {
+    if (unicodeFilename == NULL) {
         lastError = GetLastError();
-        return nullptr;
+        return NULL;
     }
 
     errorMode = GetErrorMode();
 
-    /* Have LoadLibrary return nullptr on failure; prevent GUI error message. */
+    /* Have LoadLibrary return NULL on failure; prevent GUI error message. */
     SetErrorMode(errorMode | SEM_FAILCRITICALERRORS);
 
     handle = (void*) LoadLibraryW(unicodeFilename);
 
-    if (handle == nullptr)
+    if (handle == NULL)
         lastError = GetLastError();
 
     SetErrorMode(errorMode);
@@ -121,7 +121,7 @@ dlclose(
 {
     int rc = 0;
 
-    if (handle != (void*) GetModuleHandle(nullptr))
+    if (handle != (void*) GetModuleHandle(NULL))
         rc = !FreeLibrary((HMODULE) handle);
 
     if (rc)
@@ -142,7 +142,7 @@ dlsym(
 {
     void* address = (void*) GetProcAddress((HMODULE) handle, name);
 
-    if (address == nullptr)
+    if (address == NULL)
         lastError = GetLastError();
 
     return address;
@@ -162,7 +162,7 @@ dlerror(void)
         lastError = 0;
         return errorMessage;
     } else {
-        return nullptr;
+        return NULL;
     }
 }
 
