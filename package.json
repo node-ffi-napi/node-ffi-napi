@@ -36,10 +36,11 @@
   "devDependencies": {
     "fs-extra": "^4.0.2",
     "mocha": "^4.0.1",
+    "nyc": "^11.4.1",
     "ref-array-di": "^1.2.1"
   },
   "scripts": {
-    "test": "node-gyp rebuild --directory test && mocha -gc --reporter spec"
+    "test": "node-gyp rebuild --directory test && nyc mocha -gc --reporter spec"
   },
   "repository": {
     "type": "git",
