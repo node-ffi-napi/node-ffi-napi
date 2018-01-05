@@ -20,16 +20,6 @@
     },
     'msvs_settings': {
       'VCCLCompilerTool': { 'ExceptionHandling': 1 },
-    },
-    'conditions': [
-      ['OS=="win"', {
-        'sources': [
-            'src/win32-dlfcn.cc'
-        ],
-        'include_dirs': [
-          'deps/libffi/windows/<(target_arch)',
-        ],
-      }]
-    ]
+    }
   }]
 }
