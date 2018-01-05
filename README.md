@@ -1,10 +1,13 @@
 node-ffi-napi
 =============
 ### Node.js Foreign Function Interface for N-API
-
 [![Greenkeeper badge](https://badges.greenkeeper.io/node-ffi-napi/node-ffi-napi.svg)](https://greenkeeper.io/)
-[![Build Status](https://travis-ci.org/node-ffi/node-ffi.svg?branch=master)](https://travis-ci.org/node-ffi/node-ffi)
-[![Build Status](https://ci.appveyor.com/api/projects/status/n81apam1igfw8491?svg=true)](https://ci.appveyor.com/project/TooTallNate/node-ffi)
+
+[![NPM Version](https://img.shields.io/npm/v/node-ffi-napi.svg?style=flat)](https://npmjs.org/package/ffi-napi)
+[![NPM Downloads](https://img.shields.io/npm/dm/node-ffi-napi.svg?style=flat)](https://npmjs.org/package/ffi-napi)
+[![Build Status](https://travis-ci.org/node-ffi-napi/node-ffi-napi.svg?style=flat&branch=master)](https://travis-ci.org/node-ffi-napi/node-ffi-napi?branch=master)
+[![Coverage Status](https://coveralls.io/repos/node-ffi-napi/node-ffi-napi/badge.svg?branch=master)](https://coveralls.io/r/node-ffi-napi/node-ffi-napi?branch=master)
+[![Dependency Status](https://david-dm.org/node-ffi-napi/node-ffi-napi.svg?style=flat)](https://david-dm.org/node-ffi-napi/node-ffi-napi)
 
 `node-ffi-napi` is a Node.js addon for loading and calling dynamic libraries
 using pure JavaScript. It can be used to create bindings to native libraries
