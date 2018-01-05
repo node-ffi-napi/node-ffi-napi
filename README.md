@@ -1,6 +1,8 @@
 node-ffi-napi
 =============
 ### Node.js Foreign Function Interface for N-API
+
+[![Greenkeeper badge](https://badges.greenkeeper.io/node-ffi-napi/node-ffi-napi.svg)](https://greenkeeper.io/)
 [![Build Status](https://travis-ci.org/node-ffi/node-ffi.svg?branch=master)](https://travis-ci.org/node-ffi/node-ffi)
 [![Build Status](https://ci.appveyor.com/api/projects/status/n81apam1igfw8491?svg=true)](https://ci.appveyor.com/project/TooTallNate/node-ffi)
 
