@@ -44,9 +44,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/node-ffi/node-ffi.git"
+    "url": "http://github.com/node-ffi-napi/node-ffi-napi.git"
   },
   "bugs": {
-    "url": "http://github.com/node-ffi/node-ffi/issues"
+    "url": "http://github.com/node-ffi-napi/node-ffi-napi/issues"
   }
 }
