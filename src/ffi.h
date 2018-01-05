@@ -5,6 +5,8 @@
 #endif
 #include <stdint.h>
 #include <queue>
+#include <memory>
+#include <unordered_map>
 
 #ifdef WIN32
 #include "win32-dlfcn.h"
@@ -12,29 +14,30 @@
 #include <dlfcn.h>
 #endif
 
-/* define FFI_BUILDING before including ffi.h to workaround a libffi bug on Windows */
+/* define FFI_BUILDING before including ffi.h because this is a static build */
 #define FFI_BUILDING
 #include <ffi.h>
 
 #include <uv.h>
-#include <node_object_wrap.h>
-#include <node.h>
-
-#include <nan.h>
-
-#define THROW_ERROR_EXCEPTION(x) Nan::ThrowError(x)
-#define THROW_ERROR_EXCEPTION_WITH_STATUS_CODE(x, y) Nan::ThrowError(x)
+#include <napi.h>
 
 #define FFI_ASYNC_ERROR static_cast<ffi_status>(1)
 
-using namespace v8;
-using namespace node;
+namespace FFI {
+
+using namespace Napi;
 
 /*
  * Converts an arbitrary pointer to a node Buffer with 0-length
  */
-inline Local<Value> WrapPointer(char* ptr, size_t length = 0) {
-  return Nan::NewBuffer(ptr, length, [](char*,void*){}, nullptr).ToLocalChecked();
+template<typename T>
+inline Value WrapPointer(Env env, T* ptr, size_t length = 0) {
+  if (ptr == nullptr)
+    length = 0;
+  return Buffer<char>::New(env,
+                           reinterpret_cast<char*>(ptr),
+                           length,
+                           [](Env,char*){});
 }
 
 /*
@@ -43,31 +46,33 @@ inline Local<Value> WrapPointer(char* ptr, size_t length = 0) {
 
 class AsyncCallParams {
   public:
+    explicit AsyncCallParams(Env env_) : env(env_) {}
+    Env env;
     ffi_status result;
-    char* err;
-    char* cif;
+    std::string err;
+    ffi_cif* cif;
     char* fn;
     char* res;
-    char* argv;
-    Nan::Callback* callback;
+    void** argv;
+    FunctionReference callback;
+    uv_work_t req;
 };
 
 class FFI {
   public:
-    static NAN_MODULE_INIT(InitializeStaticFunctions);
-    static NAN_MODULE_INIT(InitializeBindings);
+    static Object InitializeStaticFunctions(Env env);
+    static void InitializeBindings(Env env, Object target);
 
   protected:
-    static NAN_METHOD(FFIPrepCif);
-    static NAN_METHOD(FFIPrepCifVar);
-    static NAN_METHOD(FFICall);
-    static NAN_METHOD(FFICallAsync);
+    static Value FFIPrepCif(const Napi::CallbackInfo& args);
+    static Value FFIPrepCifVar(const Napi::CallbackInfo& args);
+    static void FFICall(const Napi::CallbackInfo& args);
+    static void FFICallAsync(const Napi::CallbackInfo& args);
     static void AsyncFFICall(uv_work_t* req);
     static void FinishAsyncFFICall(uv_work_t* req, int status);
-
-    static NAN_METHOD(Strtoul);
 };
 
+struct PerEnvironmentData;
 
 /*
  * One of these structs gets created for each `ffi.Callback()` invokation in
@@ -76,37 +81,42 @@ class FFI {
  * `ffi_closure_alloc()`, and free'd in the closure_pointer_cb function.
  */
 
-typedef struct _callback_info {
+struct callback_info {
   ffi_closure closure;           // the actual `ffi_closure` instance get inlined
   void* code;                    // the executable function pointer
-  Nan::Callback* errorFunction;    // JS callback function for reporting catched exceptions for the process' event loop
-  Nan::Callback* function;         // JS callback function the closure represents
+  FunctionReference errorFunction;    // JS callback function for reporting caught exceptions for the process' event loop
+  FunctionReference function;         // JS callback function the closure represents
   // these two are required for creating proper sized WrapPointer buffer instances
   int argc;                      // the number of arguments this function expects
   size_t resultSize;             // the size of the result pointer
-} callback_info;
+  PerEnvironmentData* per_env;
+};
 
 class ThreadedCallbackInvokation;
 
+struct PerEnvironmentData {
+  explicit PerEnvironmentData(Env env_) : env(env_) {}
+  Env env;
+
+  uv_thread_t thread;
+  uv_mutex_t mutex;
+  std::queue<ThreadedCallbackInvokation*> queue;
+  uv_async_t async;
+};
+
 class CallbackInfo {
   public:
-    static NAN_MODULE_INIT(Initialize);
+    static Function Initialize(Env env);
     static void WatcherCallback(uv_async_t* w);
 
   protected:
     static void DispatchToV8(callback_info* self, void* retval, void** parameters, bool dispatched = false);
     static void Invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
-    static NAN_METHOD(Callback);
+    static Value Callback(const Napi::CallbackInfo& info);
 
   private:
-#ifdef WIN32
-    static DWORD g_threadID;
-#else
-    static uv_thread_t g_mainthread;
-#endif // WIN32
-    static uv_mutex_t g_queue_mutex;
-    static std::queue<ThreadedCallbackInvokation*> g_queue;
-    static uv_async_t g_async;
+    static std::unordered_map<napi_env, std::unique_ptr<PerEnvironmentData>> per_environment;
+    static uv_mutex_t per_environment_mutex;
 };
 
 /**
@@ -134,3 +144,5 @@ class ThreadedCallbackInvokation {
     uv_cond_t m_cond;
     uv_mutex_t m_mutex;
 };
+
+}

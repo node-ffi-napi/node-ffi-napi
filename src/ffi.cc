@@ -1,42 +1,35 @@
-#include <node.h>
-#include <node_buffer.h>
 #include "ffi.h"
 #include "fficonfig.h"
+#include <get-uv-event-loop-napi.h>
+
+namespace FFI {
 
 static int __ffi_errno() { return errno; }
 
-NAN_MODULE_INIT(FFI::InitializeStaticFunctions) {
-  Local<Object> o = Nan::New<Object>();
+Object FFI::InitializeStaticFunctions(Env env) {
+  Object o = Object::New(env);
 
   // dl functions used by the DynamicLibrary JS class
-  o->Set(Nan::New<String>("dlopen").ToLocalChecked(),  WrapPointer((char*)dlopen));
-  o->Set(Nan::New<String>("dlclose").ToLocalChecked(), WrapPointer((char*)dlclose));
-  o->Set(Nan::New<String>("dlsym").ToLocalChecked(),   WrapPointer((char*)dlsym));
-  o->Set(Nan::New<String>("dlerror").ToLocalChecked(), WrapPointer((char*)dlerror));
+  o["dlopen"] = WrapPointer(env, dlopen);
+  o["dlclose"] = WrapPointer(env, dlclose);
+  o["dlsym"] = WrapPointer(env, dlsym);
+  o["dlerror"] = WrapPointer(env, dlerror);
 
-  o->Set(Nan::New<String>("_errno").ToLocalChecked(), WrapPointer((char*)__ffi_errno));
+  o["_errno"] = WrapPointer(env, __ffi_errno);
 
-  target->Set(Nan::New<String>("StaticFunctions").ToLocalChecked(), o);
+  return o;
 }
 
 #define SET_ENUM_VALUE(_value) \
-  Nan::ForceSet(target, Nan::New<String>(#_value).ToLocalChecked(), \
-  Nan::New<Integer>((uint32_t)_value), \
-  static_cast<PropertyAttribute>(ReadOnly|DontDelete))
+  target[#_value] = Number::New(env, static_cast<uint32_t>(_value));
 
-NAN_MODULE_INIT(FFI::InitializeBindings) {
-  Nan::Set(target, Nan::New<String>("version").ToLocalChecked(),
-    Nan::New<String>(PACKAGE_VERSION).ToLocalChecked());
+void FFI::InitializeBindings(Env env, Object target) {
+  target["version"] = PACKAGE_VERSION;
 
-  // main function exports
-  Nan::Set(target, Nan::New<String>("ffi_prep_cif").ToLocalChecked(),
-    Nan::New<FunctionTemplate>(FFIPrepCif)->GetFunction());
-  Nan::Set(target, Nan::New<String>("ffi_prep_cif_var").ToLocalChecked(),
-    Nan::New<FunctionTemplate>(FFIPrepCifVar)->GetFunction());
-  Nan::Set(target, Nan::New<String>("ffi_call").ToLocalChecked(),
-    Nan::New<FunctionTemplate>(FFICall)->GetFunction());
-  Nan::Set(target, Nan::New<String>("ffi_call_async").ToLocalChecked(),
-    Nan::New<FunctionTemplate>(FFICallAsync)->GetFunction());
+  target["ffi_prep_cif"] = Function::New(env, FFIPrepCif);
+  target["ffi_prep_cif_var"] = Function::New(env, FFIPrepCifVar);
+  target["ffi_call"] = Function::New(env, FFICall);
+  target["ffi_call_async"] = Function::New(env, FFICallAsync);
 
   // `ffi_status` enum values
   SET_ENUM_VALUE(FFI_OK);
@@ -92,48 +85,48 @@ NAN_MODULE_INIT(FFI::InitializeBindings) {
 
   /* flags for dlsym() */
 #ifdef RTLD_NEXT
-  Nan::ForceSet(target,Nan::New<String>("RTLD_NEXT").ToLocalChecked(), WrapPointer((char*)RTLD_NEXT), static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+  target["RTLD_NEXT"] = WrapPointer(env, RTLD_NEXT);
 #endif
 #ifdef RTLD_DEFAULT
-  Nan::ForceSet(target,Nan::New<String>("RTLD_DEFAULT").ToLocalChecked(), WrapPointer((char*)RTLD_DEFAULT), static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+  target["RTLD_DEFAULT"] = WrapPointer(env, RTLD_DEFAULT);
 #endif
 #ifdef RTLD_SELF
-  Nan::ForceSet(target,Nan::New<String>("RTLD_SELF").ToLocalChecked(), WrapPointer((char*)RTLD_SELF), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target["RTLD_SELF"] = WrapPointer(env, RTLD_SELF);
 #endif
 #ifdef RTLD_MAIN_ONLY
-  Nan::ForceSet(target,Nan::New<String>("RTLD_MAIN_ONLY").ToLocalChecked(), WrapPointer((char*)RTLD_MAIN_ONLY), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
+  target["RTLD_MAIN_ONLY"] = WrapPointer(env, RTLD_MAIN_ONLY));
 #endif
 
-  Nan::ForceSet(target,Nan::New<String>("FFI_ARG_SIZE").ToLocalChecked(), Nan::New<Uint32>((uint32_t)sizeof(ffi_arg)), static_cast<PropertyAttribute>(ReadOnly|DontDelete));
-  Nan::ForceSet(target,Nan::New<String>("FFI_SARG_SIZE").ToLocalChecked(), Nan::New<Uint32>((uint32_t)sizeof(ffi_sarg)), static_cast<PropertyAttribute>(ReadOnly | DontDelete));
-  Nan::ForceSet(target,Nan::New<String>("FFI_TYPE_SIZE").ToLocalChecked(), Nan::New<Uint32>((uint32_t)sizeof(ffi_type)), static_cast<PropertyAttribute>(ReadOnly | DontDelete));
-  Nan::ForceSet(target,Nan::New<String>("FFI_CIF_SIZE").ToLocalChecked(), Nan::New<Uint32>((uint32_t)sizeof(ffi_cif)), static_cast<PropertyAttribute>(ReadOnly | DontDelete));
+  target["FFI_ARG_SIZE"] = Number::New(env, sizeof(ffi_arg));
+  target["FFI_SARG_SIZE"] = Number::New(env, sizeof(ffi_sarg));
+  target["FFI_TYPE_SIZE"] = Number::New(env, sizeof(ffi_type));
+  target["FFI_CIF_SIZE"] = Number::New(env, sizeof(ffi_cif));
 
-  Local<Object> ftmap = Nan::New<Object>();
-  ftmap->Set(Nan::New<String>("void").ToLocalChecked(), WrapPointer((char*)&ffi_type_void));
-  ftmap->Set(Nan::New<String>("uint8").ToLocalChecked(), WrapPointer((char*)&ffi_type_uint8));
-  ftmap->Set(Nan::New<String>("int8").ToLocalChecked(), WrapPointer((char*)&ffi_type_sint8));
-  ftmap->Set(Nan::New<String>("uint16").ToLocalChecked(), WrapPointer((char*)&ffi_type_uint16));
-  ftmap->Set(Nan::New<String>("int16").ToLocalChecked(), WrapPointer((char*)&ffi_type_sint16));
-  ftmap->Set(Nan::New<String>("uint32").ToLocalChecked(), WrapPointer((char*)&ffi_type_uint32));
-  ftmap->Set(Nan::New<String>("int32").ToLocalChecked(), WrapPointer((char*)&ffi_type_sint32));
-  ftmap->Set(Nan::New<String>("uint64").ToLocalChecked(), WrapPointer((char*)&ffi_type_uint64));
-  ftmap->Set(Nan::New<String>("int64").ToLocalChecked(), WrapPointer((char*)&ffi_type_sint64));
-  ftmap->Set(Nan::New<String>("uchar").ToLocalChecked(), WrapPointer((char*)&ffi_type_uchar));
-  ftmap->Set(Nan::New<String>("char").ToLocalChecked(), WrapPointer((char*)&ffi_type_schar));
-  ftmap->Set(Nan::New<String>("ushort").ToLocalChecked(), WrapPointer((char*)&ffi_type_ushort));
-  ftmap->Set(Nan::New<String>("short").ToLocalChecked(), WrapPointer((char*)&ffi_type_sshort));
-  ftmap->Set(Nan::New<String>("uint").ToLocalChecked(), WrapPointer((char*)&ffi_type_uint));
-  ftmap->Set(Nan::New<String>("int").ToLocalChecked(), WrapPointer((char*)&ffi_type_sint));
-  ftmap->Set(Nan::New<String>("float").ToLocalChecked(), WrapPointer((char*)&ffi_type_float));
-  ftmap->Set(Nan::New<String>("double").ToLocalChecked(), WrapPointer((char*)&ffi_type_double));
-  ftmap->Set(Nan::New<String>("pointer").ToLocalChecked(), WrapPointer((char*)&ffi_type_pointer));
+  Object ftmap = Object::New(env);
+  ftmap["void"] = WrapPointer(env, &ffi_type_void);
+  ftmap["uint8"] = WrapPointer(env, &ffi_type_uint8);
+  ftmap["int8"] = WrapPointer(env, &ffi_type_sint8);
+  ftmap["uint16"] = WrapPointer(env, &ffi_type_uint16);
+  ftmap["int16"] = WrapPointer(env, &ffi_type_sint16);
+  ftmap["uint32"] = WrapPointer(env, &ffi_type_uint32);
+  ftmap["int32"] = WrapPointer(env, &ffi_type_sint32);
+  ftmap["uint64"] = WrapPointer(env, &ffi_type_uint64);
+  ftmap["int64"] = WrapPointer(env, &ffi_type_sint64);
+  ftmap["uchar"] = WrapPointer(env, &ffi_type_uchar);
+  ftmap["char"] = WrapPointer(env, &ffi_type_schar);
+  ftmap["ushort"] = WrapPointer(env, &ffi_type_ushort);
+  ftmap["short"] = WrapPointer(env, &ffi_type_sshort);
+  ftmap["uint"] = WrapPointer(env, &ffi_type_uint);
+  ftmap["int"] = WrapPointer(env, &ffi_type_sint);
+  ftmap["float"] = WrapPointer(env, &ffi_type_float);
+  ftmap["double"] = WrapPointer(env, &ffi_type_double);
+  ftmap["pointer"] = WrapPointer(env, &ffi_type_pointer);
   // NOTE: "long" and "ulong" get handled in JS-land
   // Let libffi handle "long long"
-  ftmap->Set(Nan::New<String>("ulonglong").ToLocalChecked(), WrapPointer((char*)&ffi_type_ulong));
-  ftmap->Set(Nan::New<String>("longlong").ToLocalChecked(), WrapPointer((char*)&ffi_type_slong));
+  ftmap["ulonglong"] = WrapPointer(env, &ffi_type_ulong);
+  ftmap["longlong"] = WrapPointer(env, &ffi_type_slong);
 
-  target->Set(Nan::New<String>("FFI_TYPES").ToLocalChecked(), ftmap);
+  target["FFI_TYPES"] = ftmap;
 }
 
 /*
@@ -149,37 +142,25 @@ NAN_MODULE_INIT(FFI::InitializeBindings) {
  * returns the ffi_status result from ffi_prep_cif()
  */
 
-NAN_METHOD(FFI::FFIPrepCif) {
-  unsigned int nargs;
-  char* rtype;
-  char* atypes;
-  char* cif;
-  ffi_status status;
-  ffi_abi abi;
+Value FFI::FFIPrepCif(const Napi::CallbackInfo& args) {
+  Env env = args.Env();
 
-  if (info.Length() != 5) {
-    return THROW_ERROR_EXCEPTION("ffi_prep_cif() requires 5 arguments!");
-  }
+  if (!args[0].IsBuffer())
+    throw TypeError::New(env, "prepCif(): Buffer required as cif arg");
+  if (!args[2].IsBuffer())
+    throw TypeError::New(env, "prepCif(): Buffer required as rtype arg");
+  if (!args[3].IsBuffer())
+    throw TypeError::New(env, "prepCif(): Buffer required as atypes arg");
 
-  Handle<Value> cif_buf = info[0];
-  if (!Buffer::HasInstance(cif_buf)) {
-    return THROW_ERROR_EXCEPTION("prepCif(): Buffer required as first arg");
-  }
+  ffi_cif* cif = args[0].As<Buffer<ffi_cif>>().Data();
+  uint32_t nargs = args[1].ToNumber();
+  ffi_type* rtype = args[2].As<Buffer<ffi_type>>().Data();
+  ffi_type** atypes = args[3].As<Buffer<ffi_type*>>().Data();
+  ffi_abi abi = static_cast<ffi_abi>(args[4].ToNumber().Int32Value());
 
-  cif = Buffer::Data(cif_buf.As<Object>());
-  nargs = info[1]->Uint32Value();
-  rtype = Buffer::Data(info[2]->ToObject());
-  atypes = Buffer::Data(info[3]->ToObject());
-  abi = static_cast<ffi_abi>(info[4]->Uint32Value());
+  ffi_status status = ffi_prep_cif(cif, abi, nargs, rtype, atypes);
 
-  status = ffi_prep_cif(
-      reinterpret_cast<ffi_cif*>(cif),
-      abi,
-      nargs,
-      reinterpret_cast<ffi_type*>(rtype),
-      reinterpret_cast<ffi_type**>(atypes));
-
-  info.GetReturnValue().Set(Nan::New<Integer>(status));
+  return Number::New(env, status);
 }
 
 /*
@@ -195,39 +176,26 @@ NAN_METHOD(FFI::FFIPrepCif) {
  *
  * returns the ffi_status result from ffi_prep_cif_var()
  */
-NAN_METHOD(FFI::FFIPrepCifVar) {
-  unsigned int fargs, targs;
-  char* rtype;
-  char* atypes;
-  char* cif;
-  ffi_status status;
-  ffi_abi abi;
+Value FFI::FFIPrepCifVar(const Napi::CallbackInfo& args) {
+  Env env = args.Env();
 
-  if (info.Length() != 6) {
-    return THROW_ERROR_EXCEPTION("ffi_prep_cif() requires 5 arguments!");
-  }
+  if (!args[0].IsBuffer())
+    throw TypeError::New(env, "prepCifVar(): Buffer required as cif arg");
+  if (!args[3].IsBuffer())
+    throw TypeError::New(env, "prepCifVar(): Buffer required as rtype arg");
+  if (!args[3].IsBuffer())
+    throw TypeError::New(env, "prepCifVar(): Buffer required as atypes arg");
 
-  Handle<Value> cif_buf = info[0];
-  if (!Buffer::HasInstance(cif_buf)) {
-    return THROW_ERROR_EXCEPTION("prepCifVar(): Buffer required as first arg");
-  }
+  ffi_cif* cif = args[0].As<Buffer<ffi_cif>>().Data();
+  uint32_t fargs = args[1].ToNumber();
+  uint32_t targs = args[2].ToNumber();
+  ffi_type* rtype = args[3].As<Buffer<ffi_type>>().Data();
+  ffi_type** atypes = args[4].As<Buffer<ffi_type*>>().Data();
+  ffi_abi abi = static_cast<ffi_abi>(args[5].ToNumber().Int32Value());
 
-  cif = Buffer::Data(cif_buf.As<Object>());
-  fargs = info[1]->Uint32Value();
-  targs = info[2]->Uint32Value();
-  rtype = Buffer::Data(info[3]->ToObject());
-  atypes = Buffer::Data(info[4]->ToObject());
-  abi = (ffi_abi)info[5]->Uint32Value();
+  ffi_status status = ffi_prep_cif_var(cif, abi, fargs, targs, rtype, atypes);
 
-  status = ffi_prep_cif_var(
-      reinterpret_cast<ffi_cif*>(cif),
-      abi,
-      fargs,
-      targs,
-      reinterpret_cast<ffi_type*>(rtype),
-      reinterpret_cast<ffi_type**>(atypes));
-
-  info.GetReturnValue().Set(Nan::New<Integer>(status));
+  return Number::New(env, status);
 }
 
 /*
@@ -239,24 +207,19 @@ NAN_METHOD(FFI::FFIPrepCifVar) {
  * args[3] - Buffer - the `void **` array of pointers containing the arguments
  */
 
-NAN_METHOD(FFI::FFICall) {
-  if (info.Length() != 4) {
-    return THROW_ERROR_EXCEPTION("ffi_call() requires 4 arguments!");
+void FFI::FFICall(const Napi::CallbackInfo& args) {
+  Env env = args.Env();
+  if (!args[0].IsBuffer() || !args[1].IsBuffer() ||
+      !args[2].IsBuffer() || !args[3].IsBuffer()) {
+    throw TypeError::New(env, "ffi_call() requires 4 Buffer arguments!");
   }
 
-  char* cif = Buffer::Data(info[0]->ToObject());
-  char* fn = Buffer::Data(info[1]->ToObject());
-  char* res = Buffer::Data(info[2]->ToObject());
-  char* fnargs = Buffer::Data(info[3]->ToObject());
+  ffi_cif* cif = args[0].As<Buffer<ffi_cif>>().Data();
+  char* fn = args[1].As<Buffer<char>>().Data();
+  char* res = args[2].As<Buffer<char>>().Data();
+  void** fnargs = args[3].As<Buffer<void*>>().Data();
 
-  ffi_call(
-      reinterpret_cast<ffi_cif*>(cif),
-      FFI_FN(fn),
-      reinterpret_cast<void*>(res),
-      reinterpret_cast<void**>(fnargs)
-    );
-
-  info.GetReturnValue().SetUndefined();
+  ffi_call(cif, FFI_FN(fn), static_cast<void*>(res), fnargs);
 }
 
 /*
@@ -269,45 +232,44 @@ NAN_METHOD(FFI::FFICall) {
  * args[4] - Function - the callback function to invoke when complete
  */
 
-NAN_METHOD(FFI::FFICallAsync) {
-  if (info.Length() != 5) {
-    return THROW_ERROR_EXCEPTION("ffi_call_async() requires 5 arguments!");
+void FFI::FFICallAsync(const Napi::CallbackInfo& args) {
+  Env env = args.Env();
+  if (!args[0].IsBuffer() || !args[1].IsBuffer() ||
+      !args[2].IsBuffer() || !args[3].IsBuffer()) {
+    throw TypeError::New(env, "ffi_call_async() requires 4 Buffer arguments!");
+  }
+  if (!args[4].IsFunction()) {
+    throw TypeError::New(env, "ffi_call_async() requires a function argument");
   }
 
-  AsyncCallParams* p = new AsyncCallParams();
-  p->result = FFI_OK;
-
   // store a persistent references to all the Buffers and the callback function
-  p->cif = Buffer::Data(info[0]->ToObject());
-  p->fn = Buffer::Data(info[1]->ToObject());
-  p->res = Buffer::Data(info[2]->ToObject());
-  p->argv = Buffer::Data(info[3]->ToObject());
+  AsyncCallParams* p = new AsyncCallParams(env);
+  p->cif = args[0].As<Buffer<ffi_cif>>().Data();
+  p->fn = args[1].As<Buffer<char>>().Data();
+  p->res = args[2].As<Buffer<char>>().Data();
+  p->argv = args[3].As<Buffer<void*>>().Data();
 
-  Local<Function> callback = Local<Function>::Cast(info[4]);
-  p->callback = new Nan::Callback(callback);
+  p->result = FFI_OK;
+  p->callback = Reference<Function>::New(args[4].As<Function>(), 1);
+  p->req.data = p;
 
-  uv_work_t* req = new uv_work_t;
-  req->data = p;
-
-  uv_queue_work(uv_default_loop(), req,
-      FFI::AsyncFFICall,
-      FFI::FinishAsyncFFICall);
-
-  info.GetReturnValue().SetUndefined();
+  uv_queue_work(get_uv_event_loop(env),
+                &p->req,
+                FFI::AsyncFFICall,
+                FFI::FinishAsyncFFICall);
 }
 
 /*
  * Called on the thread pool.
  */
-void FFI::AsyncFFICall(uv_work_t *req) {
+void FFI::AsyncFFICall(uv_work_t* req) {
   AsyncCallParams* p = static_cast<AsyncCallParams*>(req->data);
 
-  ffi_call(
-    (ffi_cif *)p->cif,
-    FFI_FN(p->fn),
-    (void*)p->res,
-    (void **)p->argv
-  );
+  try {
+    ffi_call(p->cif, FFI_FN(p->fn), p->res, p->argv);
+  } catch (std::exception& e) {
+    p->err = e.what();
+  }
 }
 
 /*
@@ -316,39 +278,31 @@ void FFI::AsyncFFICall(uv_work_t *req) {
  */
 
 void FFI::FinishAsyncFFICall(uv_work_t* req, int status) {
-  Nan::HandleScope scope;
-
   AsyncCallParams* p = static_cast<AsyncCallParams*>(req->data);
+  Env env = p->env;
+  HandleScope scope(env);
 
-  Local<Value> argv[] = { Nan::Null() };
+  std::vector<napi_value> argv = { env.Null() };
   if (p->result != FFI_OK) {
-    // an Objective-C error was thrown
-    argv[0] = WrapPointer(p->err);
+    argv[0] = String::New(env, p->err);
   }
 
-  Nan::TryCatch try_catch;
-
   // invoke the registered callback function
-  p->callback->Call(1, argv);
-
-  // dispose of our persistent handle to the callback function
-  delete p->callback;
+  // TODO: MakeCallback
+  p->callback.Call(argv);
 
   // free up our memory (allocated in FFICallAsync)
   delete p;
-  delete req;
-
-  if (try_catch.HasCaught()) {
-    Nan::FatalException(try_catch);
-  }
 }
 
-NAN_MODULE_INIT(init) {
-  Nan::HandleScope scope;
-
-  FFI::InitializeBindings(target);
-  FFI::InitializeStaticFunctions(target);
-  CallbackInfo::Initialize(target);
 }
 
-NODE_MODULE(ffi_bindings, init)
+static Napi::Object Init(Napi::Env env, Napi::Object exports) {
+  FFI::FFI::InitializeBindings(env, exports);
+  exports["StaticFunctions"] = FFI::FFI::InitializeStaticFunctions(env);
+  exports["Callback"] = FFI::CallbackInfo::Initialize(env);
+  return exports;
+}
+
+NODE_API_MODULE(ffi_bindings, Init)
+

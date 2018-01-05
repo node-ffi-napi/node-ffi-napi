@@ -2,19 +2,13 @@
 // Reference:
 //   http://www.bufferoverflow.ch/cgi-bin/dwww/usr/share/doc/libffi5/html/The-Closure-API.html
 
-#include <node.h>
-#include <node_buffer.h>
-#include <node_version.h>
 #include "ffi.h"
 
-#ifdef WIN32
-DWORD CallbackInfo::g_threadID;
-#else
-uv_thread_t CallbackInfo::g_mainthread;
-#endif
-uv_mutex_t CallbackInfo::g_queue_mutex;
-std::queue<ThreadedCallbackInvokation*> CallbackInfo::g_queue;
-uv_async_t CallbackInfo::g_async;
+namespace FFI {
+
+std::unordered_map<napi_env, std::unique_ptr<PerEnvironmentData>>
+CallbackInfo::per_environment;
+uv_mutex_t CallbackInfo::per_environment_mutex;
 
 /*
  * Called when the `ffi_closure *` pointer (actually the "code" pointer) get's
@@ -23,12 +17,10 @@ uv_async_t CallbackInfo::g_async;
  * then finally free the struct.
  */
 
-void closure_pointer_cb(char *data, void *hint) {
+void closure_pointer_cb(Env env, char *data, void *hint) {
   callback_info* info = static_cast<callback_info*>(hint);
-  // dispose of the Persistent function reference
-  delete info->function;
-  info->function = nullptr;
   // now we can free the closure data
+  info->~callback_info();
   ffi_closure_free(info);
 }
 
@@ -37,51 +29,53 @@ void closure_pointer_cb(char *data, void *hint) {
  */
 
 void CallbackInfo::DispatchToV8(callback_info* info, void* retval, void** parameters, bool dispatched) {
-  Nan::HandleScope scope;
+  Env env = info->per_env->env;
+  HandleScope handle_scope(env);
 
-  static const char* errorMessage = "ffi fatal: callback has been garbage collected!";
+  static const char* errorMessage =
+      "ffi fatal: callback has been garbage collected!";
 
-  if (info->function == nullptr) {
-    // throw an error instead of segfaulting.
-    // see: https://github.com/rbranson/node-ffi/issues/72
-    if (dispatched) {
-      Local<Value> errorFunctionArgv[1];
-      errorFunctionArgv[0] = Nan::New<String>(errorMessage).ToLocalChecked();
-      info->errorFunction->Call(1, errorFunctionArgv);
-    }
-    else {
-      Nan::ThrowError(errorMessage);
-    }
-  } else {
-    // invoke the registered callback function
-    Local<Value> functionArgv[2];
-    functionArgv[0] = WrapPointer((char*)retval, info->resultSize);
-    functionArgv[1] = WrapPointer((char*)parameters, sizeof(char*) * info->argc);
-    Local<Value> e = info->function->Call(2, functionArgv);
-    if (!e->IsUndefined()) {
+  try {
+    if (info->function.IsEmpty()) {
+      // throw an error instead of segfaulting.
+      // see: https://github.com/rbranson/node-ffi/issues/72
       if (dispatched) {
-        Local<Value> errorFunctionArgv[1];
-        errorFunctionArgv[0] = e;
-        info->errorFunction->Call(1, errorFunctionArgv);
+        info->errorFunction.Call({ String::New(env, errorMessage) });
       } else {
-        Nan::ThrowError(e);
+        throw Error::New(env, errorMessage);
+      }
+    } else {
+      // invoke the registered callback function
+      Value e = info->function.Call({
+        WrapPointer(env, retval, info->resultSize),
+        WrapPointer(env, parameters, sizeof(char*) * info->argc)
+      });
+      if (!e.IsUndefined()) {
+        if (dispatched) {
+          info->errorFunction.Call({ e });
+        } else {
+          throw Error::New(env, e.ToString());
+        }
       }
     }
+  } catch (Error& err) {
+    err.ThrowAsJavaScriptException();
   }
 }
 
 void CallbackInfo::WatcherCallback(uv_async_t* w) {
-  uv_mutex_lock(&g_queue_mutex);
+  PerEnvironmentData* data = static_cast<PerEnvironmentData*>(w->data);
+  uv_mutex_lock(&data->mutex);
 
-  while (!g_queue.empty()) {
-    ThreadedCallbackInvokation* inv = g_queue.front();
-    g_queue.pop();
+  while (!data->queue.empty()) {
+    ThreadedCallbackInvokation* inv = data->queue.front();
+    data->queue.pop();
 
     DispatchToV8(inv->m_cbinfo, inv->m_retval, inv->m_parameters, true);
     inv->SignalDoneExecuting();
   }
 
-  uv_mutex_unlock(&g_queue_mutex);
+  uv_mutex_unlock(&data->mutex);
 }
 
 /*
@@ -89,33 +83,40 @@ void CallbackInfo::WatcherCallback(uv_async_t* w) {
  * executable C function pointer as a node Buffer instance.
  */
 
-NAN_METHOD(CallbackInfo::Callback) {
-  if (info.Length() != 5) {
-    return THROW_ERROR_EXCEPTION("Not enough arguments.");
+Value CallbackInfo::Callback(const Napi::CallbackInfo& args) {
+  Env env = args.Env();
+
+  if (args.Length() != 5 || !args[0].IsBuffer() ||
+      !args[3].IsFunction() || !args[4].IsFunction()) {
+    throw Error::New(env, "Signature: Buffer, int, int, Function, Function");
   }
 
   // Args: cif pointer, JS function
-  // TODO: Check args
-  ffi_cif* cif = reinterpret_cast<ffi_cif*>(Buffer::Data(info[0]->ToObject()));
-  size_t resultSize = info[1]->Int32Value();
-  int argc = info[2]->Int32Value();
-  Local<Function> errorReportCallback = Local<Function>::Cast(info[3]);
-  Local<Function> callback = Local<Function>::Cast(info[4]);
+  ffi_cif* cif = args[0].As<Buffer<ffi_cif>>().Data();
+  size_t resultSize = args[1].ToNumber().Int32Value();
+  int32_t argc = args[2].ToNumber();
+  Function errorReportCallback = args[3].As<Function>();
+  Function callback = args[4].As<Function>();
 
   callback_info* cbInfo;
   ffi_status status;
   void* code;
 
-  cbInfo = reinterpret_cast<callback_info*>(ffi_closure_alloc(sizeof(callback_info), &code));
-
-  if (!cbInfo) {
-    return THROW_ERROR_EXCEPTION("ffi_closure_alloc() Returned Error");
+  void* storage = ffi_closure_alloc(sizeof(callback_info), &code);
+  if (storage == nullptr) {
+    throw Error::New(env, "ffi_closure_alloc() Returned Error");
   }
+
+  cbInfo = new(storage) callback_info();
 
   cbInfo->resultSize = resultSize;
   cbInfo->argc = argc;
-  cbInfo->errorFunction = new Nan::Callback(errorReportCallback);
-  cbInfo->function = new Nan::Callback(callback);
+  cbInfo->errorFunction = Reference<Function>::New(errorReportCallback, 1);
+  cbInfo->function = Reference<Function>::New(callback, 1);
+
+  uv_mutex_lock(&per_environment_mutex);
+  cbInfo->per_env = per_environment[env].get();
+  uv_mutex_unlock(&per_environment_mutex);
 
   // store a reference to the callback function pointer
   // (not sure if this is actually needed...)
@@ -124,7 +125,7 @@ NAN_METHOD(CallbackInfo::Callback) {
   //CallbackInfo *self = new CallbackInfo(callback, closure, code, argc);
 
   status = ffi_prep_closure_loc(
-    reinterpret_cast<ffi_closure*>(cbInfo),
+    &cbInfo->closure,
     cif,
     Invoke,
     static_cast<void*>(cbInfo),
@@ -133,15 +134,16 @@ NAN_METHOD(CallbackInfo::Callback) {
 
   if (status != FFI_OK) {
     ffi_closure_free(cbInfo);
-    return THROW_ERROR_EXCEPTION_WITH_STATUS_CODE("ffi_prep_closure() Returned Error", status);
+    Error e = Error::New(env, "ffi_prep_closure() Returned Error");
+    e.Set("status", Number::New(env, status));
+    throw e;
   }
 
-  info.GetReturnValue().Set(
-    Nan::NewBuffer(reinterpret_cast<char*>(code),
-                   sizeof(void*),
-                   closure_pointer_cb,
-                   cbInfo).ToLocalChecked()
-  );
+  return Buffer<char>::New(env,
+                           static_cast<char*>(code),
+                           sizeof(void*),
+                           closure_pointer_cb,
+                           cbInfo);
 }
 
 /*
@@ -149,59 +151,70 @@ NAN_METHOD(CallbackInfo::Callback) {
  * executed.
  */
 
-void CallbackInfo::Invoke(ffi_cif *cif, void *retval, void **parameters, void *user_data) {
+void CallbackInfo::Invoke(ffi_cif* cif,
+                          void* retval,
+                          void** parameters,
+                          void* user_data) {
   callback_info* info = static_cast<callback_info*>(user_data);
+  PerEnvironmentData* data = info->per_env;
 
   // are we executing from another thread?
-#ifdef WIN32
-  if (g_threadID == GetCurrentThreadId()) {
-#else
-  uv_thread_t self_thread = (uv_thread_t) uv_thread_self();
-  if (uv_thread_equal(&self_thread, &g_mainthread)) {
-#endif
+  uv_thread_t self_thread = uv_thread_self();
+  if (uv_thread_equal(&self_thread, &data->thread)) {
     DispatchToV8(info, retval, parameters);
   } else {
     // hold the event loop open while this is executing
-    uv_ref(reinterpret_cast<uv_handle_t*>(&g_async));
+    // TODO: REF()ING FROM A DIFFERENT IS AN INHERENT RACE CONDITION AND THIS
+    // CODE SHOULD NEVER HAVE BEEN WRITTEN
+    uv_ref(reinterpret_cast<uv_handle_t*>(&data->async));
 
     // create a temporary storage area for our invokation parameters
-    ThreadedCallbackInvokation* inv = new ThreadedCallbackInvokation(info, retval, parameters);
+    std::unique_ptr<ThreadedCallbackInvokation> inv (
+        new ThreadedCallbackInvokation(info, retval, parameters));
 
     // push it to the queue -- threadsafe
-    uv_mutex_lock(&g_queue_mutex);
-    g_queue.push(inv);
-    uv_mutex_unlock(&g_queue_mutex);
+    uv_mutex_lock(&data->mutex);
+    data->queue.push(inv.get());
+    uv_mutex_unlock(&data->mutex);
 
     // send a message to our main thread to wake up the WatchCallback loop
-    uv_async_send(&g_async);
+    uv_async_send(&data->async);
 
     // wait for signal from calling thread
     inv->WaitForExecution();
 
-    uv_unref((uv_handle_t *)&g_async);
-    delete inv;
+    uv_unref(reinterpret_cast<uv_handle_t*>(&data->async));
   }
 }
+
+static uv_once_t init_per_env_mutex_once = UV_ONCE_INIT;
 
 /*
  * Init stuff.
  */
 
-void CallbackInfo::Initialize(Handle<Object> target) {
-  Nan::HandleScope scope;
+Function CallbackInfo::Initialize(Env env) {
+  Function fn = Function::New(env, Callback);
 
-  Nan::Set(target, Nan::New<String>("Callback").ToLocalChecked(),
-    Nan::New<FunctionTemplate>(Callback)->GetFunction());
-
+  std::unique_ptr<PerEnvironmentData> data (new PerEnvironmentData(env));
   // initialize our threaded invokation stuff
-#ifdef WIN32
-  g_threadID = GetCurrentThreadId();
-#else
-  g_mainthread = uv_thread_self();
-#endif
-  uv_async_init(uv_default_loop(), &g_async, CallbackInfo::WatcherCallback);
-  uv_mutex_init(&g_queue_mutex);
+  data->thread = uv_thread_self();
+  uv_async_init(uv_default_loop(), &data->async, CallbackInfo::WatcherCallback);
+  data->async.data = data.get();
+  uv_mutex_init(&data->mutex);
 
   // allow the event loop to exit while this is running
-  uv_unref(reinterpret_cast<uv_handle_t*>(&g_async));
+  uv_unref(reinterpret_cast<uv_handle_t*>(&data->async));
+
+  uv_once(&init_per_env_mutex_once, []() {
+    uv_mutex_init(&per_environment_mutex);
+  });
+
+  uv_mutex_lock(&per_environment_mutex);
+  per_environment[env] = std::move(data);
+  uv_mutex_unlock(&per_environment_mutex);
+
+  return fn;
+}
+
 }

@@ -37,8 +37,12 @@ describe('DynamicLibrary', function () {
     it('should load libraries when pathname contains unicode characters', function() {
       // Directory and file names are "I can't read this" and "Or this"
       // translated into Simplified Chinese by Google Translate
-      const lib = path.join(__dirname, 'build', 'Release', 'ffi_tests.node'); // .node file is just a dynamic library
-      const toDir = path.join(__dirname, 'build', 'Release', String.fromCharCode(0x6211, 0x65e0, 0x6cd5, 0x9605, 0x8bfb));
+      let lib, t;
+      for (t of ['Debug', 'Release']) {
+        lib = path.join(__dirname, 'build', t, 'ffi_tests.node'); // .node file is just a dynamic library
+        if (fs.existsSync(lib)) break;
+      }
+      const toDir = path.join(__dirname, 'build', t, String.fromCharCode(0x6211, 0x65e0, 0x6cd5, 0x9605, 0x8bfb));
       const toLib = path.join(toDir, String.fromCharCode(0x6216, 0x8005, 0x8fd9) + '.node');
       fs.mkdirsSync(toDir);
       fs.copySync(lib, toLib);
