@@ -22,7 +22,7 @@ you've got C debugger skills, you probably won't know what's going on.
 **WARNING**: The original API of `node-ffi` is left mostly untouched in the
 N-API wrapper. However, the API did not have very well-defined properties
 in the context of garbage collection and multi-threaded execution. It is
-recommended to avaoid from any multi-threading usage of this library
+recommended to avoid any multi-threading usage of this library
 if possible.
 
 Example
