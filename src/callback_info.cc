@@ -40,13 +40,14 @@ void CallbackInfo::DispatchToV8(callback_info* info, void* retval, void** parame
       // throw an error instead of segfaulting.
       // see: https://github.com/rbranson/node-ffi/issues/72
       if (dispatched) {
-        info->errorFunction.Call({ String::New(env, errorMessage) });
+        info->errorFunction.MakeCallback(Object::New(env),
+                                         { String::New(env, errorMessage) });
       } else {
         throw Error::New(env, errorMessage);
       }
     } else {
       // invoke the registered callback function
-      Value e = info->function.Call({
+      Value e = info->function.MakeCallback(Object::New(env), {
         WrapPointer(env, retval, info->resultSize),
         WrapPointer(env, parameters, sizeof(char*) * info->argc)
       });

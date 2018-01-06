@@ -164,7 +164,7 @@ describe('Callback', function () {
       func.async(-9999, function (err, res) {
         assert.strictEqual(null, err);
         assert.strictEqual(9999, res);
-        done();
+        process.nextTick(done);
       });
     });
 

@@ -288,8 +288,8 @@ void FFI::FinishAsyncFFICall(uv_work_t* req, int status) {
   }
 
   // invoke the registered callback function
-  // TODO: MakeCallback
-  p->callback.Call(argv);
+  // TODO: Track napi_async_context properly
+  p->callback.MakeCallback(Object::New(env), argv);
 
   // free up our memory (allocated in FFICallAsync)
   delete p;
