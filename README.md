@@ -3,8 +3,8 @@ node-ffi-napi
 ### Node.js Foreign Function Interface for N-API
 [![Greenkeeper badge](https://badges.greenkeeper.io/node-ffi-napi/node-ffi-napi.svg)](https://greenkeeper.io/)
 
-[![NPM Version](https://img.shields.io/npm/v/node-ffi-napi.svg?style=flat)](https://npmjs.org/package/ffi-napi)
-[![NPM Downloads](https://img.shields.io/npm/dm/node-ffi-napi.svg?style=flat)](https://npmjs.org/package/ffi-napi)
+[![NPM Version](https://img.shields.io/npm/v/ffi-napi.svg?style=flat)](https://npmjs.org/package/ffi-napi)
+[![NPM Downloads](https://img.shields.io/npm/dm/ffi-napi.svg?style=flat)](https://npmjs.org/package/ffi-napi)
 [![Build Status](https://travis-ci.org/node-ffi-napi/node-ffi-napi.svg?style=flat&branch=master)](https://travis-ci.org/node-ffi-napi/node-ffi-napi?branch=master)
 [![Coverage Status](https://coveralls.io/repos/node-ffi-napi/node-ffi-napi/badge.svg?branch=master)](https://coveralls.io/r/node-ffi-napi/node-ffi-napi?branch=master)
 [![Dependency Status](https://david-dm.org/node-ffi-napi/node-ffi-napi.svg?style=flat)](https://david-dm.org/node-ffi-napi/node-ffi-napi)
