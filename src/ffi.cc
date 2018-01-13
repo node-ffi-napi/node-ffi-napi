@@ -94,7 +94,7 @@ void FFI::InitializeBindings(Env env, Object target) {
   target["RTLD_SELF"] = WrapPointer(env, RTLD_SELF);
 #endif
 #ifdef RTLD_MAIN_ONLY
-  target["RTLD_MAIN_ONLY"] = WrapPointer(env, RTLD_MAIN_ONLY));
+  target["RTLD_MAIN_ONLY"] = WrapPointer(env, RTLD_MAIN_ONLY);
 #endif
 
   target["FFI_ARG_SIZE"] = Number::New(env, sizeof(ffi_arg));
