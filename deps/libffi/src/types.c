@@ -30,9 +30,6 @@
 
 #include <ffi.h>
 #include <ffi_common.h>
-#ifdef FFI_TARGET_HAS_COMPLEX_TYPE
-  #include <complex.h>
-#endif
 
 /* Type definitions */
 
@@ -47,41 +44,20 @@ maybe_const ffi_type ffi_type_##name = {	\
   id, NULL					\
 }
 
-#if defined(_MSC_VER) && _MSC_VER == 1900
-
-  #define FFI_COMPLEX_TYPEDEF(name, type, maybe_const)	\
-  static ffi_type *ffi_elements_complex_##name [2] = {	\
-      (ffi_type *)(&ffi_type_##name), NULL		\
-  };							\
-  struct struct_align_complex_##name {			\
-    char c;						\
-    _C_##type##_complex x;				\
-  };							\
-  maybe_const ffi_type ffi_type_complex_##name = {	\
-    sizeof(_C_##type##_complex),			\
-    offsetof(struct struct_align_complex_##name, x),	\
-    FFI_TYPE_COMPLEX,					\
-    (ffi_type **)ffi_elements_complex_##name		\
-  }
-
-#else
-
-  #define FFI_COMPLEX_TYPEDEF(name, type, maybe_const)	\
-  static ffi_type *ffi_elements_complex_##name [2] = {	\
-	  (ffi_type *)(&ffi_type_##name), NULL		\
-  };							\
-  struct struct_align_complex_##name {			\
-    char c;						\
-    _Complex type x;					\
-  };							\
-  maybe_const ffi_type ffi_type_complex_##name = {	\
-    sizeof(_Complex type),				\
-    offsetof(struct struct_align_complex_##name, x),	\
-    FFI_TYPE_COMPLEX,					\
-    (ffi_type **)ffi_elements_complex_##name		\
-  }
-
-#endif
+#define FFI_COMPLEX_TYPEDEF(name, type, maybe_const)	\
+static ffi_type *ffi_elements_complex_##name [2] = {	\
+	(ffi_type *)(&ffi_type_##name), NULL		\
+};							\
+struct struct_align_complex_##name {			\
+  char c;						\
+  _Complex type x;					\
+};							\
+maybe_const ffi_type ffi_type_complex_##name = {	\
+  sizeof(_Complex type),				\
+  offsetof(struct struct_align_complex_##name, x),	\
+  FFI_TYPE_COMPLEX,					\
+  (ffi_type **)ffi_elements_complex_##name		\
+}
 
 /* Size and alignment are fake here. They must not be 0. */
 const ffi_type ffi_type_void = {
