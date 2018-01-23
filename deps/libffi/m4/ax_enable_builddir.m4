@@ -121,8 +121,7 @@ if test ".$srcdir" = ".." ; then
       test -f $srcdir/$cache_file  && mv $srcdir/$cache_file  .
       AC_MSG_RESULT(....exec $SHELL $srcdir/[$]0 "--srcdir=$srcdir" "--enable-builddir=$SUB" ${1+"[$]@"})
       case "[$]0" in # restart
-       [[\\/]]* | ?:[[\\/]]*) # Asbolute name
-         eval $SHELL "'[$]0'" "'--srcdir=$srcdir'" "'--enable-builddir=$SUB'" $ac_configure_args ;;
+       [/\\]*) eval $SHELL "'[$]0'" "'--srcdir=$srcdir'" "'--enable-builddir=$SUB'" $ac_configure_args ;;
        *) eval $SHELL "'$srcdir/[$]0'" "'--srcdir=$srcdir'" "'--enable-builddir=$SUB'" $ac_configure_args ;;
       esac ; exit $?
     fi

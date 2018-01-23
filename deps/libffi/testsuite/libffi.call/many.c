@@ -7,11 +7,21 @@
 /* { dg-do run } */
 #include "ffitest.h"
 
-#include <stdlib.h>
 #include <float.h>
-#include <math.h>
 
-static float ABI_ATTR many(float f1, float f2, float f3, float f4, float f5, float f6, float f7, float f8, float f9, float f10, float f11, float f12, float f13)
+static float many(float f1,
+		  float f2,
+		  float f3,
+		  float f4,
+		  float f5,
+		  float f6,
+		  float f7,
+		  float f8,
+		  float f9,
+		  float f10,
+		  float f11,
+		  float f12,
+		  float f13)
 {
 #if 0
   printf("%f %f %f %f %f %f %f %f %f %f %f %f %f\n",
@@ -20,7 +30,7 @@ static float ABI_ATTR many(float f1, float f2, float f3, float f4, float f5, flo
 	 (double) f11, (double) f12, (double) f13);
 #endif
 
-  return f1+f2+f3+f4+f5+f6+f7+f8+f9+f10+f11+f12+f13;
+  return ((f1/f2+f3/f4+f5/f6+f7/f8+f9/f10+f11/f12) * f13);
 }
 
 int main (void)
@@ -40,7 +50,7 @@ int main (void)
     }
 
     /* Initialize the cif */
-    CHECK(ffi_prep_cif(&cif, ABI_NUM, 13,
+    CHECK(ffi_prep_cif(&cif, FFI_DEFAULT_ABI, 13, 
 		       &ffi_type_float, args) == FFI_OK);
 
     ffi_call(&cif, FFI_FN(many), &f, values);
@@ -52,7 +62,7 @@ int main (void)
 	       fa[8], fa[9],
 	       fa[10],fa[11],fa[12]);
 
-    if (fabs(f - ff) < FLT_EPSILON)
+    if (f - ff < FLT_EPSILON)
       exit(0);
     else
       abort();

@@ -9,7 +9,6 @@
 
 static double return_dbl(double dbl)
 {
-  printf ("%f\n", dbl);
   return 2 * dbl;
 }
 int main (void)

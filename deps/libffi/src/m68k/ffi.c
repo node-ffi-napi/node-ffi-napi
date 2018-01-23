@@ -123,8 +123,6 @@ ffi_prep_args (void *stack, extended_cif *ecif)
 #define CIF_FLAGS_POINTER	32
 #define CIF_FLAGS_STRUCT1	64
 #define CIF_FLAGS_STRUCT2	128
-#define CIF_FLAGS_SINT8		256
-#define CIF_FLAGS_SINT16	512
 
 /* Perform machine dependent cif processing */
 ffi_status
@@ -200,14 +198,6 @@ ffi_prep_cif_machdep (ffi_cif *cif)
     case FFI_TYPE_SINT64:
     case FFI_TYPE_UINT64:
       cif->flags = CIF_FLAGS_DINT;
-      break;
-
-    case FFI_TYPE_SINT16:
-      cif->flags = CIF_FLAGS_SINT16;
-      break;
-
-    case FFI_TYPE_SINT8:
-      cif->flags = CIF_FLAGS_SINT8;
       break;
 
     default:

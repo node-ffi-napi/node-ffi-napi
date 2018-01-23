@@ -1,10 +1,9 @@
 /* -----------------------------------------------------------------------
-   ffi64.c - Copyright (c) 2013  The Written Word, Inc.
-             Copyright (c) 2011  Anthony Green
+   ffi64.c - Copyright (c) 20011  Anthony Green
              Copyright (c) 2008, 2010  Red Hat, Inc.
              Copyright (c) 2002, 2007  Bo Thorsen <bo@suse.de>
-
-   x86-64 Foreign Function Interface
+             
+   x86-64 Foreign Function Interface 
 
    Permission is hereby granted, free of charge, to any person obtaining
    a copy of this software and associated documentation files (the
@@ -38,30 +37,17 @@
 #define MAX_GPR_REGS 6
 #define MAX_SSE_REGS 8
 
-#if defined(__INTEL_COMPILER)
-#include "xmmintrin.h"
+#ifdef __INTEL_COMPILER
 #define UINT128 __m128
-#else
-#if defined(__SUNPRO_C)
-#include <sunmedia_types.h>
-#define UINT128 __m128i
 #else
 #define UINT128 __int128_t
 #endif
-#endif
-
-union big_int_union
-{
-  UINT32 i32;
-  UINT64 i64;
-  UINT128 i128;
-};
 
 struct register_args
 {
   /* Registers for argument passing.  */
   UINT64 gpr[MAX_GPR_REGS];
-  union big_int_union sse[MAX_SSE_REGS];
+  UINT128 sse[MAX_SSE_REGS];
 };
 
 extern void ffi_call_unix64 (void *args, unsigned long bytes, unsigned flags,
@@ -152,7 +138,7 @@ merge_classes (enum x86_64_reg_class class1, enum x86_64_reg_class class2)
 
    See the x86-64 PS ABI for details.
 */
-static size_t
+static int
 classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
 		   size_t byte_offset)
 {
@@ -168,7 +154,7 @@ classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
     case FFI_TYPE_SINT64:
     case FFI_TYPE_POINTER:
       {
-	size_t size = byte_offset + type->size;
+	int size = byte_offset + type->size;
 
 	if (size <= 4)
 	  {
@@ -203,17 +189,15 @@ classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
     case FFI_TYPE_DOUBLE:
       classes[0] = X86_64_SSEDF_CLASS;
       return 1;
-#if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
     case FFI_TYPE_LONGDOUBLE:
       classes[0] = X86_64_X87_CLASS;
       classes[1] = X86_64_X87UP_CLASS;
       return 2;
-#endif
     case FFI_TYPE_STRUCT:
       {
-	const size_t UNITS_PER_WORD = 8;
-	size_t words = (type->size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
-	ffi_type **ptr;
+	const int UNITS_PER_WORD = 8;
+	int words = (type->size + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
+	ffi_type **ptr; 
 	int i;
 	enum x86_64_reg_class subclasses[MAX_CLASSES];
 
@@ -235,7 +219,7 @@ classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
 	/* Merge the fields of structure.  */
 	for (ptr = type->elements; *ptr != NULL; ptr++)
 	  {
-	    size_t num;
+	    int num;
 
 	    byte_offset = ALIGN (byte_offset, (*ptr)->alignment);
 
@@ -244,7 +228,7 @@ classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
 	      return 0;
 	    for (i = 0; i < num; i++)
 	      {
-		size_t pos = byte_offset / 8;
+		int pos = byte_offset / 8;
 		classes[i + pos] =
 		  merge_classes (subclasses[i], classes[i + pos]);
 	      }
@@ -308,12 +292,11 @@ classify_argument (ffi_type *type, enum x86_64_reg_class classes[],
    class.  Return zero iff parameter should be passed in memory, otherwise
    the number of registers.  */
 
-static size_t
+static int
 examine_argument (ffi_type *type, enum x86_64_reg_class classes[MAX_CLASSES],
 		  _Bool in_return, int *pngpr, int *pnsse)
 {
-  size_t n;
-  int i, ngpr, nsse;
+  int i, n, ngpr, nsse;
 
   n = classify_argument (type, classes, 0);
   if (n == 0)
@@ -354,9 +337,9 @@ examine_argument (ffi_type *type, enum x86_64_reg_class classes[MAX_CLASSES],
 ffi_status
 ffi_prep_cif_machdep (ffi_cif *cif)
 {
-  int gprcount, ssecount, i, avn, ngpr, nsse, flags;
+  int gprcount, ssecount, i, avn, n, ngpr, nsse, flags;
   enum x86_64_reg_class classes[MAX_CLASSES];
-  size_t bytes, n;
+  size_t bytes;
 
   gprcount = ssecount = 0;
 
@@ -414,7 +397,7 @@ ffi_prep_cif_machdep (ffi_cif *cif)
   if (ssecount)
     flags |= 1 << 11;
   cif->flags = flags;
-  cif->bytes = (unsigned)ALIGN (bytes, 8);
+  cif->bytes = ALIGN (bytes, 8);
 
   return FFI_OK;
 }
@@ -457,7 +440,8 @@ ffi_call (ffi_cif *cif, void (*fn)(void), void *rvalue, void **avalue)
 
   for (i = 0; i < avn; ++i)
     {
-      size_t n, size = arg_types[i]->size;
+      size_t size = arg_types[i]->size;
+      int n;
 
       n = examine_argument (arg_types[i], classes, 0, &ngpr, &nsse);
       if (n == 0
@@ -487,33 +471,16 @@ ffi_call (ffi_cif *cif, void (*fn)(void), void *rvalue, void **avalue)
 		{
 		case X86_64_INTEGER_CLASS:
 		case X86_64_INTEGERSI_CLASS:
-		  /* Sign-extend integer arguments passed in general
-		     purpose registers, to cope with the fact that
-		     LLVM incorrectly assumes that this will be done
-		     (the x86-64 PS ABI does not specify this). */
-		  switch (arg_types[i]->type)
-		    {
-		    case FFI_TYPE_SINT8:
-		      *(SINT64 *)&reg_args->gpr[gprcount] = (SINT64) *((SINT8 *) a);
-		      break;
-		    case FFI_TYPE_SINT16:
-		      *(SINT64 *)&reg_args->gpr[gprcount] = (SINT64) *((SINT16 *) a);
-		      break;
-		    case FFI_TYPE_SINT32:
-		      *(SINT64 *)&reg_args->gpr[gprcount] = (SINT64) *((SINT32 *) a);
-		      break;
-		    default:
-		      reg_args->gpr[gprcount] = 0;
-		      memcpy (&reg_args->gpr[gprcount], a, size < 8 ? size : 8);
-		    }
+		  reg_args->gpr[gprcount] = 0;
+		  memcpy (&reg_args->gpr[gprcount], a, size < 8 ? size : 8);
 		  gprcount++;
 		  break;
 		case X86_64_SSE_CLASS:
 		case X86_64_SSEDF_CLASS:
-		  reg_args->sse[ssecount++].i64 = *(UINT64 *) a;
+		  reg_args->sse[ssecount++] = *(UINT64 *) a;
 		  break;
 		case X86_64_SSESF_CLASS:
-		  reg_args->sse[ssecount++].i32 = *(UINT32 *) a;
+		  reg_args->sse[ssecount++] = *(UINT32 *) a;
 		  break;
 		default:
 		  abort();
@@ -586,7 +553,7 @@ ffi_closure_unix64_inner(ffi_closure *closure, void *rvalue,
   if (ret != FFI_TYPE_VOID)
     {
       enum x86_64_reg_class classes[MAX_CLASSES];
-      size_t n = examine_argument (cif->rtype, classes, 1, &ngpr, &nsse);
+      int n = examine_argument (cif->rtype, classes, 1, &ngpr, &nsse);
       if (n == 0)
 	{
 	  /* The return value goes in memory.  Arrange for the closure
@@ -609,11 +576,11 @@ ffi_closure_unix64_inner(ffi_closure *closure, void *rvalue,
 
   avn = cif->nargs;
   arg_types = cif->arg_types;
-
+  
   for (i = 0; i < avn; ++i)
     {
       enum x86_64_reg_class classes[MAX_CLASSES];
-      size_t n;
+      int n;
 
       n = examine_argument (arg_types[i], classes, 0, &ngpr, &nsse);
       if (n == 0

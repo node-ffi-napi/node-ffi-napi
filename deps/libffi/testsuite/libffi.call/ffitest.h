@@ -15,25 +15,22 @@
 
 #define MAX_ARGS 256
 
-#define CHECK(x) (void)(!(x) ? (abort(), 1) : 0)
+#define CHECK(x) !(x) ? abort() : 0
 
-/* Define macros so that compilers other than gcc can run the tests.  */
+/* Define __UNUSED__ that also other compilers than gcc can run the tests.  */
 #undef __UNUSED__
 #if defined(__GNUC__)
 #define __UNUSED__ __attribute__((__unused__))
-#define __STDCALL__ __attribute__((stdcall))
-#define __THISCALL__ __attribute__((thiscall))
-#define __FASTCALL__ __attribute__((fastcall))
 #else
 #define __UNUSED__
-#define __STDCALL__ __stdcall
-#define __THISCALL__ __thiscall
-#define __FASTCALL__ __fastcall
 #endif
 
-#ifndef ABI_NUM
-#define ABI_NUM FFI_DEFAULT_ABI
-#define ABI_ATTR
+/* Define __FASTCALL__ so that other compilers than gcc can run the tests.  */
+#undef __FASTCALL__
+#if defined _MSC_VER
+#define __FASTCALL__ __fastcall
+#else
+#define __FASTCALL__ __attribute__((fastcall))
 #endif
 
 /* Prefer MAP_ANON(YMOUS) to /dev/zero, since we don't need to keep a
@@ -130,6 +127,44 @@
 #define PRId64 "I64d"
 #endif
 
-#ifndef PRIuPTR
-#define PRIuPTR "u"
+#ifdef USING_MMAP
+static inline void *
+allocate_mmap (size_t size)
+{
+  void *page;
+#if defined (HAVE_MMAP_DEV_ZERO)
+  static int dev_zero_fd = -1;
+#endif
+
+#ifdef HAVE_MMAP_DEV_ZERO
+  if (dev_zero_fd == -1)
+    {
+      dev_zero_fd = open ("/dev/zero", O_RDONLY);
+      if (dev_zero_fd == -1)
+	{
+	  perror ("open /dev/zero: %m");
+	  exit (1);
+	}
+    }
+#endif
+
+
+#ifdef HAVE_MMAP_ANON
+  page = mmap (NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+	       MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+#endif
+#ifdef HAVE_MMAP_DEV_ZERO
+  page = mmap (NULL, size, PROT_READ | PROT_WRITE | PROT_EXEC,
+	       MAP_PRIVATE, dev_zero_fd, 0);
+#endif
+
+  if (page == (void *) MAP_FAILED)
+    {
+      perror ("virtual memory exhausted");
+      exit (1);
+    }
+
+  return page;
+}
+
 #endif

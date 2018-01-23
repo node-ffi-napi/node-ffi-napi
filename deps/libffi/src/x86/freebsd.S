@@ -49,9 +49,6 @@ ffi_call_SYSV:
 	movl  16(%ebp),%ecx
 	subl  %ecx,%esp
 
-	/* Align the stack pointer to 16-bytes */
-	andl  $0xfffffff0, %esp
-
 	movl  %esp,%eax
 
 	/* Place all of the ffi_prep_args in position  */
@@ -459,5 +456,3 @@ ffi_closure_raw_SYSV:
 #endif
 
 #endif /* ifndef __x86_64__ */
-
-	.section .note.GNU-stack,"",%progbits

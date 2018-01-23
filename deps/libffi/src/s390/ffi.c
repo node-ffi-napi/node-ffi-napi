@@ -215,12 +215,9 @@ ffi_prep_args (unsigned char *stack, extended_cif *ecif)
 #endif
 
       /* Check how a structure type is passed.  */
-      if (type == FFI_TYPE_STRUCT || type == FFI_TYPE_COMPLEX)
+      if (type == FFI_TYPE_STRUCT)
 	{
-	  if (type == FFI_TYPE_COMPLEX)
-	    type = FFI_TYPE_POINTER;
-	  else
-	    type = ffi_check_struct_type (*ptr);
+	  type = ffi_check_struct_type (*ptr);
 
 	  /* If we pass the struct via pointer, copy the data.  */
 	  if (type == FFI_TYPE_POINTER)
@@ -359,9 +356,8 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 	cif->flags = FFI390_RET_VOID;
 	break;
 
-      /* Structures and complex are returned via a hidden pointer.  */
+      /* Structures are returned via a hidden pointer.  */
       case FFI_TYPE_STRUCT:
-      case FFI_TYPE_COMPLEX:
 	cif->flags = FFI390_RET_STRUCT;
 	n_gpr++;  /* We need one GPR to pass the pointer.  */
 	break; 
@@ -424,12 +420,9 @@ ffi_prep_cif_machdep(ffi_cif *cif)
 #endif
 
       /* Check how a structure type is passed.  */
-      if (type == FFI_TYPE_STRUCT || type == FFI_TYPE_COMPLEX)
+      if (type == FFI_TYPE_STRUCT)
 	{
-	  if (type == FFI_TYPE_COMPLEX)
-	    type = FFI_TYPE_POINTER;
-	  else
-	    type = ffi_check_struct_type (*ptr);
+	  type = ffi_check_struct_type (*ptr);
 
 	  /* If we pass the struct via pointer, we must reserve space
 	     to copy its data for proper call-by-value semantics.  */
@@ -595,12 +588,9 @@ ffi_closure_helper_SYSV (ffi_closure *closure,
 #endif
 
       /* Check how a structure type is passed.  */
-      if (type == FFI_TYPE_STRUCT || type == FFI_TYPE_COMPLEX)
+      if (type == FFI_TYPE_STRUCT)
 	{
-	  if (type == FFI_TYPE_COMPLEX)
-	    type = FFI_TYPE_POINTER;
-	  else
-	    type = ffi_check_struct_type (*ptr);
+	  type = ffi_check_struct_type (*ptr);
 
 	  /* If we pass the struct via pointer, remember to 
 	     retrieve the pointer later.  */
@@ -697,7 +687,6 @@ ffi_closure_helper_SYSV (ffi_closure *closure,
       /* Void is easy, and so is struct.  */
       case FFI_TYPE_VOID:
       case FFI_TYPE_STRUCT:
-      case FFI_TYPE_COMPLEX:
 #if FFI_TYPE_LONGDOUBLE != FFI_TYPE_DOUBLE
       case FFI_TYPE_LONGDOUBLE:
 #endif
@@ -761,8 +750,7 @@ ffi_prep_closure_loc (ffi_closure *closure,
 		      void *user_data,
 		      void *codeloc)
 {
-  if (cif->abi != FFI_SYSV)
-    return FFI_BAD_ABI;
+  FFI_ASSERT (cif->abi == FFI_SYSV);
 
 #ifndef __s390x__
   *(short *)&closure->tramp [0] = 0x0d10;   /* basr %r1,0 */

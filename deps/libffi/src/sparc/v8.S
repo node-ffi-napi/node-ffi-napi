@@ -1,6 +1,5 @@
 /* -----------------------------------------------------------------------
-   v8.S - Copyright (c) 2013  The Written Word, Inc.
-	  Copyright (c) 1996, 1997, 2003, 2004, 2008  Red Hat, Inc.
+   v8.S - Copyright (c) 1996, 1997, 2003, 2004, 2008 Red Hat, Inc.
    
    SPARC Foreign Function Interface 
 
@@ -32,39 +31,11 @@
 #define STACKFRAME 96		/* Minimum stack framesize for SPARC */
 #define ARGS (64+4)		/* Offset of register area in frame */
 
-#ifndef __GNUC__	
-	.text
-        .align 8
-.globl ffi_flush_icache
-.globl _ffi_flush_icache
-
-ffi_flush_icache:
-_ffi_flush_icache:	
-        add %o0, %o1, %o2
-#ifdef SPARC64	
-1:	flush %o0
-#else	
-1:	iflush %o0
-#endif
-	add %o0, 8, %o0
-	cmp %o0, %o2
-	blt 1b
-	nop
-	nop
-	nop
-	nop
-	nop
-	retl
-	nop
-.ffi_flush_icache_end:
-	.size	ffi_flush_icache,.ffi_flush_icache_end-ffi_flush_icache
-#endif
-
-	.text
+.text
         .align 8
 .globl ffi_call_v8
 .globl _ffi_call_v8
-	
+
 ffi_call_v8:
 _ffi_call_v8:
 .LLFB1:
@@ -239,10 +210,6 @@ ffi_closure_v8:
 	be	done2
 
 	cmp	%o0, FFI_TYPE_SINT64
-	be,a	done1
-	 ldd	[%fp-8], %i0
-
-	cmp	%o0, FFI_TYPE_UINT64
 	be,a	done1
 	 ldd	[%fp-8], %i0
 

@@ -42,10 +42,8 @@
 # format and translated into something sensible for cl or ml.
 #
 
-args_orig=$@
 args="-nologo -W3"
-static_crt=
-debug_crt=
+md=-MT
 cl="cl"
 ml="ml"
 safeseh="-safeseh"
@@ -64,12 +62,8 @@ do
       shift 1
     ;;
     -m64)
+      cl="cl"   # "$MSVC/x86_amd64/cl"
       ml="ml64" # "$MSVC/x86_amd64/ml64"
-      safeseh=
-      shift 1
-    ;;
-    -clang-cl)
-      cl="clang-cl"
       safeseh=
       shift 1
     ;;
@@ -78,51 +72,21 @@ do
       shift 1
     ;;
     -O*)
-      # Runtime error checks (enabled by setting -RTC1 in the -DFFI_DEBUG
-      # case below) are not compatible with optimization flags and will
-      # cause the build to fail. Therefore, drop the optimization flag if
-      # -DFFI_DEBUG is also set.
-      case $args_orig in
-        *-DFFI_DEBUG*)
-          args="$args"
-        ;;
-        *)
-          # The ax_cc_maxopt.m4 macro from the upstream autoconf-archive
-          # project doesn't support MSVC and therefore ends up trying to
-          # use -O3. Use the equivalent "max optimization" flag for MSVC
-          # instead of erroring out.
-          case $1 in
-            -O3)
-              args="$args -O2"
-            ;;
-            *)
-              args="$args $1"
-            ;;
-          esac
-          opt="true"
-        ;;
-      esac
+      # If we're optimizing, make sure we explicitly turn on some optimizations
+      # that are implicitly disabled by debug symbols (-Zi).
+      args="$args $1 -OPT:REF -OPT:ICF -INCREMENTAL:NO"
       shift 1
     ;;
     -g)
       # Enable debug symbol generation.
-      args="$args -Zi"
+      args="$args -Zi -DEBUG"
       shift 1
     ;;
     -DFFI_DEBUG)
-      # Enable runtime error checks.
+      # Link against debug CRT and enable runtime error checks.
       args="$args -RTC1"
       defines="$defines $1"
-      shift 1
-    ;;
-    -DUSE_STATIC_RTL)
-      # Link against static CRT.
-      static_crt=1
-      shift 1
-    ;;
-    -DUSE_DEBUG_RTL)
-      # Link against debug CRT.
-      debug_crt=1
+      md=-MTd
       shift 1
     ;;
     -c)
@@ -160,10 +124,6 @@ do
     -Wall)
       # -Wall on MSVC is overzealous, and we already build with -W3. Nothing
       # to do here.
-      shift 1
-    ;;
-    -pedantic)
-      # libffi tests -pedantic with -Wall, so drop it also.
       shift 1
     ;;
     -Werror)
@@ -210,23 +170,6 @@ do
   esac
 done
 
-# If -Zi is specified, certain optimizations are implicitly disabled
-# by MSVC. Add back those optimizations if this is an optimized build.
-# NOTE: These arguments must come after all others.
-if [ -n "$opt" ]; then
-    args="$args -link -OPT:REF -OPT:ICF -INCREMENTAL:NO"
-fi
-
-if [ -n "$static_crt" ]; then
-    md=-MT
-else
-    md=-MD
-fi
-
-if [ -n "$debug_crt" ]; then
-    md="${md}d"
-fi
-
 if [ -n "$assembly" ]; then
     if [ -z "$outdir" ]; then
       outdir="."
@@ -246,10 +189,7 @@ if [ -n "$assembly" ]; then
 else
     args="$md $args"
     echo "$cl $args"
-    # Return an error code of 1 if an invalid command line parameter is passed
-    # instead of just ignoring it.
-    eval "(\"$cl\" $args 2>&1 1>&3 | \
-          awk '{print \$0} /D9002/ {error=1} END{exit error}' >&2) 3>&1"
+    eval "\"$cl\" $args"
     result=$?
 fi
 
