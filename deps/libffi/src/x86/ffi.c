@@ -65,10 +65,7 @@ unsigned int ffi_prep_args(char *stack, extended_cif *ecif)
   if ((ecif->cif->flags == FFI_TYPE_STRUCT
        || ecif->cif->flags == FFI_TYPE_MS_STRUCT)
 #ifdef X86_WIN64
-      && ((ecif->cif->rtype->size != 1) &&
-          (ecif->cif->rtype->size != 2) &&
-          (ecif->cif->rtype->size != 4) &&
-          (ecif->cif->rtype->size != 8))
+      && ((ecif->cif->rtype->size & (1 | 2 | 4 | 8)) == 0)
 #endif
       )
     {
@@ -111,7 +108,7 @@ unsigned int ffi_prep_args(char *stack, extended_cif *ecif)
 #ifdef X86_WIN64
       if (z > FFI_SIZEOF_ARG
           || ((*p_arg)->type == FFI_TYPE_STRUCT
-              && (z != 1 && z != 2 && z != 4 && z != 8))
+              && (z & (1 | 2 | 4 | 8)) == 0)
 #if FFI_TYPE_DOUBLE != FFI_TYPE_LONGDOUBLE
           || ((*p_arg)->type == FFI_TYPE_LONGDOUBLE)
 #endif
@@ -363,10 +360,7 @@ void ffi_call(ffi_cif *cif, void (*fn)(void), void *rvalue, void **avalue)
 #ifdef X86_WIN64
   if (rvalue == NULL
       && cif->flags == FFI_TYPE_STRUCT
-      && ((cif->rtype->size != 1) &&
-          (cif->rtype->size != 2) &&
-          (cif->rtype->size != 4) &&
-          (cif->rtype->size != 8)))
+      && ((cif->rtype->size & (1 | 2 | 4 | 8)) == 0))
     {
       ecif.rvalue = alloca((cif->rtype->size + 0xF) & ~0xF);
     }
@@ -551,10 +545,7 @@ ffi_prep_incoming_args(char *stack, void **rvalue, void **avalue,
   if ((cif->flags == FFI_TYPE_STRUCT
        || cif->flags == FFI_TYPE_MS_STRUCT)
 #ifdef X86_WIN64
-      && ((cif->rtype->size != 1) &&
-          (cif->rtype->size != 2) &&
-          (cif->rtype->size != 4) &&
-          (cif->rtype->size != 8))
+      && ((cif->rtype->size & (1 | 2 | 4 | 8)) == 0)
 #endif
       )
     {
@@ -617,7 +608,7 @@ ffi_prep_incoming_args(char *stack, void **rvalue, void **avalue,
 #ifdef X86_WIN64
       if (z > FFI_SIZEOF_ARG
           || ((*p_arg)->type == FFI_TYPE_STRUCT
-              && (z != 1 && z != 2 && z != 4 && z != 8))
+              && (z & (1 | 2 | 4 | 8)) == 0)
 #if FFI_TYPE_DOUBLE != FFI_TYPE_LONGDOUBLE
           || ((*p_arg)->type == FFI_TYPE_LONGDOUBLE)
 #endif
