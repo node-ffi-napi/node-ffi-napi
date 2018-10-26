@@ -2,6 +2,8 @@
 #include "fficonfig.h"
 #include <get-uv-event-loop-napi.h>
 
+uv_loop_t* loop = get_uv_event_loop(env);
+
 namespace FFI {
 
 static int __ffi_errno() { return errno; }
