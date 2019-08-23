@@ -123,6 +123,13 @@
               'sources': [ 'src/arm/sysv.S' ]
             }]
           ]
+        },'target_arch=="arm64"', {
+          'sources': [ 'src/aarch64/ffi.c' ],
+          'conditions': [
+            ['OS=="linux"', {
+              'sources': [ 'src/aarch64/sysv.S' ]
+            }]
+          ]
         }, { # ia32 or x64
           'sources': [
             'src/x86/ffi.c',
