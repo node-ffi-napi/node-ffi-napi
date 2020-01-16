@@ -6,6 +6,12 @@
 
 namespace FFI {
 
+#ifdef WIN32
+DWORD g_threadID;
+#else
+uv_thread_t g_mainthread;
+#endif
+
 std::unordered_map<napi_env, std::unique_ptr<PerEnvironmentData>>
 CallbackInfo::per_environment;
 uv_mutex_t CallbackInfo::per_environment_mutex;
@@ -158,10 +164,13 @@ void CallbackInfo::Invoke(ffi_cif* cif,
                           void* user_data) {
   callback_info* info = static_cast<callback_info*>(user_data);
   PerEnvironmentData* data = info->per_env;
-
+#ifdef WIN32
+  if (g_threadID == GetCurrentThreadId()) {
+#else
   // are we executing from another thread?
   uv_thread_t self_thread = uv_thread_self();
-  if (uv_thread_equal(&self_thread, &data->thread)) {
+  if (uv_thread_equal(&self_thread, &g_mainthread)) {
+#endif
     DispatchToV8(info, retval, parameters);
   } else {
     // hold the event loop open while this is executing
@@ -196,6 +205,12 @@ static uv_once_t init_per_env_mutex_once = UV_ONCE_INIT;
 
 Function CallbackInfo::Initialize(Env env) {
   Function fn = Function::New(env, Callback);
+
+#ifdef WIN32
+  g_threadID = GetCurrentThreadId();
+#else
+  g_mainthread = (uv_thread_t)uv_thread_self();
+#endif
 
   std::unique_ptr<PerEnvironmentData> data (new PerEnvironmentData(env));
   // initialize our threaded invokation stuff
