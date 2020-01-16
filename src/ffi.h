@@ -97,8 +97,11 @@ class ThreadedCallbackInvokation;
 struct PerEnvironmentData {
   explicit PerEnvironmentData(Env env_) : env(env_) {}
   Env env;
-
+#ifdef WIN32
+  DWORD thread;
+#else
   uv_thread_t thread;
+#endif
   uv_mutex_t mutex;
   std::queue<ThreadedCallbackInvokation*> queue;
   uv_async_t async;
