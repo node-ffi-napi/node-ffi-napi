@@ -158,10 +158,13 @@ void CallbackInfo::Invoke(ffi_cif* cif,
                           void* user_data) {
   callback_info* info = static_cast<callback_info*>(user_data);
   PerEnvironmentData* data = info->per_env;
-
+#ifdef WIN32
+  if (data->thread == GetCurrentThreadId()) {
+#else
   // are we executing from another thread?
   uv_thread_t self_thread = uv_thread_self();
   if (uv_thread_equal(&self_thread, &data->thread)) {
+#endif
     DispatchToV8(info, retval, parameters);
   } else {
     // hold the event loop open while this is executing
@@ -197,9 +200,14 @@ static uv_once_t init_per_env_mutex_once = UV_ONCE_INIT;
 Function CallbackInfo::Initialize(Env env) {
   Function fn = Function::New(env, Callback);
 
+
   std::unique_ptr<PerEnvironmentData> data (new PerEnvironmentData(env));
   // initialize our threaded invokation stuff
+#ifdef WIN32
+  data->thread = GetCurrentThreadId();
+#else
   data->thread = uv_thread_self();
+#endif
   uv_async_init(uv_default_loop(), &data->async, CallbackInfo::WatcherCallback);
   data->async.data = data.get();
   uv_mutex_init(&data->mutex);
