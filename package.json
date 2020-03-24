@@ -30,6 +30,7 @@
     "debug": "^3.1.0",
     "get-uv-event-loop-napi-h": "^1.0.5",
     "node-addon-api": "1.6.1",
+    "prebuild-install": "^5.3.3",
     "ref-napi": "^1.4.0",
     "ref-struct-di": "^1.1.0"
   },
@@ -37,10 +38,14 @@
     "fs-extra": "^5.0.0",
     "mocha": "^5.0.0",
     "nyc": "^15.0.0",
+    "prebuild": "^10.0.0",
     "ref-array-di": "^1.2.1"
   },
   "scripts": {
-    "test": "node-gyp rebuild --directory test && nyc mocha -gc --reporter spec"
+    "upload-posix": "prebuild -t $npm_config_node_version -u $PREBUILD_GITHUB_TOKEN --include-regex \"bindings\\.node$\"",
+    "upload-windows": "prebuild -t %npm_config_node_version% -u %PREBUILD_GITHUB_TOKEN% --include-regex \"bindings\\.node$\"",
+    "test": "node-gyp rebuild --directory test && nyc mocha -gc --reporter spec",
+    "install": "prebuild-install --verbose || node-gyp rebuild"
   },
   "repository": {
     "type": "git",

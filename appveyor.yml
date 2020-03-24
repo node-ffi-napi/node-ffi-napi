@@ -21,7 +21,7 @@ install:
   - ps: Install-Product node $env:nodejs_version $env:platform
   - node -p process.arch
   - node -p process.version
-  - npm install
+  - npm install --build-from-source
 
 # Post-install test scripts.
 test_script:
@@ -36,3 +36,7 @@ build: off
 
 # Set build version format here instead of in the admin panel.
 version: "{build}"
+
+deploy_script:
+  - IF "%APPVEYOR_REPO_TAG%" == "true" (npm run upload-windows)
+  - IF NOT "%APPVEYOR_REPO_TAG%" == "true" (echo 'Not tagged, skipping deploy')
