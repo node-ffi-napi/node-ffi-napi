@@ -5,9 +5,10 @@ environment:
   # Test against these versions of Node.js and io.js
   matrix:
     # node.js
-    - nodejs_version: "6"
     - nodejs_version: "8"
     - nodejs_version: "9"
+    - nodejs_version: "10"
+    - nodejs_version: "12"
 
 platform:
   - x86
