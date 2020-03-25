@@ -2,6 +2,8 @@ sudo: false
 
 env:
   - CXX=g++-4.9
+  - CXX=clang++
+
 addons:
   apt:
     sources:
@@ -11,11 +13,24 @@ addons:
 
 language: node_js
 
+os:
+  - linux
+  - osx
+
+osx_image: xcode10
+
 node_js:
   - "8"
   - "9"
   - "10"
   - "12"
+
+jobs:
+  exclude:
+      - os: osx
+        env: CXX=g++-4.9
+      - os: linux
+        env: CXX=clang++
 
 install:
   - npm install --build-from-source
