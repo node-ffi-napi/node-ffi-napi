@@ -4,7 +4,7 @@ const ref = require('ref-napi');
 const Array = require('ref-array-di')(ref);
 const Struct = require('ref-struct-di')(ref);
 const ffi = require('../');
-const bindings = require('bindings')({ module_root: __dirname, bindings: 'ffi_tests' });
+const bindings = require('node-gyp-build')(__dirname);
 
 describe('ForeignFunction', function () {
   afterEach(global.gc);
