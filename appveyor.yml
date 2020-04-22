@@ -5,9 +5,10 @@ environment:
   # Test against these versions of Node.js and io.js
   matrix:
     # node.js
-    - nodejs_version: "6"
     - nodejs_version: "8"
     - nodejs_version: "9"
+    - nodejs_version: "10"
+    - nodejs_version: "12"
 
 platform:
   - x86
@@ -20,7 +21,7 @@ install:
   - ps: Install-Product node $env:nodejs_version $env:platform
   - node -p process.arch
   - node -p process.version
-  - npm install
+  - npm install --build-from-source
 
 # Post-install test scripts.
 test_script:
@@ -30,8 +31,26 @@ test_script:
   # run tests
   - npm test
 
+after_test:
+  - ps: If ($env:nodejs_version -eq "12") { npm run prebuild }
+
 # Don't actually build.
 build: off
 
 # Set build version format here instead of in the admin panel.
 version: "{build}"
+
+artifacts:
+  - path: prebuilds
+    name: $(APPVEYOR_REPO_TAG_NAME)-win-$(PLATFORM)
+    type: zip
+
+deploy:
+  - provider: GitHub
+    artifact: /.*\.zip/
+    draft: false
+    prerelease: true
+    auth_token: $(PREBUILD_GITHUB_TOKEN)
+    on:
+      appveyor_repo_tag: true
+      nodejs_version: "12"
