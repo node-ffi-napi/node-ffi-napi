@@ -20,10 +20,9 @@ os:
 osx_image: xcode10
 
 node_js:
-  - "8"
-  - "9"
   - "10"
   - "12"
+  - "14"
 
 jobs:
   exclude:
