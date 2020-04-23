@@ -1,3 +1,6 @@
+#include <uv.h>
+#include <napi.h>
+
 #include <limits.h>
 #include <errno.h>
 #ifndef __STDC_LIMIT_MACROS
@@ -14,12 +17,11 @@
 #include <dlfcn.h>
 #endif
 
+#include "ref-napi.h"
+
 /* define FFI_BUILDING before including ffi.h because this is a static build */
 #define FFI_BUILDING
 #include <ffi.h>
-
-#include <uv.h>
-#include <napi.h>
 
 #define FFI_ASYNC_ERROR static_cast<ffi_status>(1)
 
@@ -27,18 +29,7 @@ namespace FFI {
 
 using namespace Napi;
 
-/*
- * Converts an arbitrary pointer to a node Buffer with 0-length
- */
-template<typename T>
-inline Value WrapPointer(Env env, T* ptr, size_t length = 0) {
-  if (ptr == nullptr)
-    length = 0;
-  return Buffer<char>::New(env,
-                           reinterpret_cast<char*>(ptr),
-                           length,
-                           [](Env,char*){});
-}
+class InstanceData;
 
 /*
  * Class used to store stuff during async ffi_call() invokations.
@@ -72,8 +63,6 @@ class FFI {
     static void FinishAsyncFFICall(uv_work_t* req, int status);
 };
 
-struct PerEnvironmentData;
-
 /*
  * One of these structs gets created for each `ffi.Callback()` invokation in
  * JavaScript-land. It contains all the necessary information when invoking the
@@ -89,23 +78,10 @@ struct callback_info {
   // these two are required for creating proper sized WrapPointer buffer instances
   int argc;                      // the number of arguments this function expects
   size_t resultSize;             // the size of the result pointer
-  PerEnvironmentData* per_env;
+  InstanceData* instance_data;
 };
 
 class ThreadedCallbackInvokation;
-
-struct PerEnvironmentData {
-  explicit PerEnvironmentData(Env env_) : env(env_) {}
-  Env env;
-#ifdef WIN32
-  DWORD thread;
-#else
-  uv_thread_t thread;
-#endif
-  uv_mutex_t mutex;
-  std::queue<ThreadedCallbackInvokation*> queue;
-  uv_async_t async;
-};
 
 class CallbackInfo {
   public:
@@ -116,10 +92,6 @@ class CallbackInfo {
     static void DispatchToV8(callback_info* self, void* retval, void** parameters, bool dispatched = false);
     static void Invoke(ffi_cif* cif, void* retval, void** parameters, void* user_data);
     static Value Callback(const Napi::CallbackInfo& info);
-
-  private:
-    static std::unordered_map<napi_env, std::unique_ptr<PerEnvironmentData>> per_environment;
-    static uv_mutex_t per_environment_mutex;
 };
 
 /**
@@ -147,5 +119,39 @@ class ThreadedCallbackInvokation {
     uv_cond_t m_cond;
     uv_mutex_t m_mutex;
 };
+
+class InstanceData final {
+ public:
+  explicit InstanceData(Env env_) : env(env_) {}
+
+  Env env;
+  RefNapi::Instance* ref_napi_instance = nullptr;
+
+  void Dispose();
+
+#ifdef WIN32
+  DWORD thread;
+#else
+  uv_thread_t thread;
+#endif
+  uv_mutex_t mutex;
+  std::queue<ThreadedCallbackInvokation*> queue;
+  uv_async_t async;
+
+  static InstanceData* Get(Env env);
+};
+
+TypedArray WrapPointerImpl(Env env, char* ptr, size_t length);
+char* GetBufferDataImpl(Value val);
+
+template <typename T>
+inline TypedArray WrapPointer(Env env, T* ptr, size_t length = 0) {
+  return WrapPointerImpl(env, reinterpret_cast<char*>(ptr), length);
+}
+
+template <typename T>
+inline T* GetBufferData(Value val) {
+  return reinterpret_cast<T*>(GetBufferDataImpl(val));
+}
 
 }

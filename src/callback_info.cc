@@ -6,10 +6,6 @@
 
 namespace FFI {
 
-std::unordered_map<napi_env, std::unique_ptr<PerEnvironmentData>>
-CallbackInfo::per_environment;
-uv_mutex_t CallbackInfo::per_environment_mutex;
-
 /*
  * Called when the `ffi_closure *` pointer (actually the "code" pointer) get's
  * GC'd on the JavaScript side. In this case we have to unwrap the
@@ -17,7 +13,7 @@ uv_mutex_t CallbackInfo::per_environment_mutex;
  * then finally free the struct.
  */
 
-void closure_pointer_cb(Env env, char *data, void *hint) {
+void closure_pointer_cb(Env env, char* data, callback_info* hint) {
   callback_info* info = static_cast<callback_info*>(hint);
   // now we can free the closure data
   info->~callback_info();
@@ -29,14 +25,14 @@ void closure_pointer_cb(Env env, char *data, void *hint) {
  */
 
 void CallbackInfo::DispatchToV8(callback_info* info, void* retval, void** parameters, bool dispatched) {
-  Env env = info->per_env->env;
+  Env env = info->instance_data->env;
   HandleScope handle_scope(env);
 
   static const char* errorMessage =
       "ffi fatal: callback has been garbage collected!";
 
   try {
-    if (info->function.IsEmpty()) {
+    if (info->function.IsEmpty() || info->function.Value().IsEmpty()) {
       // throw an error instead of segfaulting.
       // see: https://github.com/rbranson/node-ffi/issues/72
       if (dispatched) {
@@ -65,7 +61,7 @@ void CallbackInfo::DispatchToV8(callback_info* info, void* retval, void** parame
 }
 
 void CallbackInfo::WatcherCallback(uv_async_t* w) {
-  PerEnvironmentData* data = static_cast<PerEnvironmentData*>(w->data);
+  InstanceData* data = static_cast<InstanceData*>(w->data);
   uv_mutex_lock(&data->mutex);
 
   while (!data->queue.empty()) {
@@ -93,7 +89,7 @@ Value CallbackInfo::Callback(const Napi::CallbackInfo& args) {
   }
 
   // Args: cif pointer, JS function
-  ffi_cif* cif = args[0].As<Buffer<ffi_cif>>().Data();
+  ffi_cif* cif = GetBufferData<ffi_cif>(args[0]);
   size_t resultSize = args[1].ToNumber().Int32Value();
   int32_t argc = args[2].ToNumber();
   Function errorReportCallback = args[3].As<Function>();
@@ -114,10 +110,7 @@ Value CallbackInfo::Callback(const Napi::CallbackInfo& args) {
   cbInfo->argc = argc;
   cbInfo->errorFunction = Reference<Function>::New(errorReportCallback, 1);
   cbInfo->function = Reference<Function>::New(callback, 1);
-
-  uv_mutex_lock(&per_environment_mutex);
-  cbInfo->per_env = per_environment[env].get();
-  uv_mutex_unlock(&per_environment_mutex);
+  cbInfo->instance_data = InstanceData::Get(env);
 
   // store a reference to the callback function pointer
   // (not sure if this is actually needed...)
@@ -140,11 +133,10 @@ Value CallbackInfo::Callback(const Napi::CallbackInfo& args) {
     throw e;
   }
 
-  return Buffer<char>::New(env,
-                           static_cast<char*>(code),
-                           sizeof(void*),
-                           closure_pointer_cb,
-                           cbInfo);
+  TypedArray ret = WrapPointer(env, code, sizeof(void*));
+  ret.ArrayBuffer().
+      AddFinalizer(closure_pointer_cb, static_cast<char*>(code), cbInfo);
+  return ret;
 }
 
 /*
@@ -157,7 +149,7 @@ void CallbackInfo::Invoke(ffi_cif* cif,
                           void** parameters,
                           void* user_data) {
   callback_info* info = static_cast<callback_info*>(user_data);
-  PerEnvironmentData* data = info->per_env;
+  InstanceData* data = info->instance_data;
 #ifdef WIN32
   if (data->thread == GetCurrentThreadId()) {
 #else
@@ -191,8 +183,6 @@ void CallbackInfo::Invoke(ffi_cif* cif,
   }
 }
 
-static uv_once_t init_per_env_mutex_once = UV_ONCE_INIT;
-
 /*
  * Init stuff.
  */
@@ -200,29 +190,21 @@ static uv_once_t init_per_env_mutex_once = UV_ONCE_INIT;
 Function CallbackInfo::Initialize(Env env) {
   Function fn = Function::New(env, Callback);
 
-
-  std::unique_ptr<PerEnvironmentData> data (new PerEnvironmentData(env));
+  InstanceData* instance_data = InstanceData::Get(env);
   // initialize our threaded invokation stuff
 #ifdef WIN32
-  data->thread = GetCurrentThreadId();
+  instance_data->thread = GetCurrentThreadId();
 #else
-  data->thread = uv_thread_self();
+  instance_data->thread = uv_thread_self();
 #endif
-  uv_async_init(uv_default_loop(), &data->async, CallbackInfo::WatcherCallback);
-  data->async.data = data.get();
-  uv_mutex_init(&data->mutex);
+  uv_loop_t* loop = nullptr;
+  napi_get_uv_event_loop(env, &loop);
+  uv_async_init(loop, &instance_data->async, CallbackInfo::WatcherCallback);
+  instance_data->async.data = instance_data;
+  uv_mutex_init(&instance_data->mutex);
 
   // allow the event loop to exit while this is running
-  uv_unref(reinterpret_cast<uv_handle_t*>(&data->async));
-
-  uv_once(&init_per_env_mutex_once, []() {
-    uv_mutex_init(&per_environment_mutex);
-  });
-
-  uv_mutex_lock(&per_environment_mutex);
-  per_environment[env] = std::move(data);
-  uv_mutex_unlock(&per_environment_mutex);
-
+  uv_unref(reinterpret_cast<uv_handle_t*>(&instance_data->async));
   return fn;
 }
 

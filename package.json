@@ -28,9 +28,9 @@
   "dependencies": {
     "debug": "^3.1.0",
     "get-uv-event-loop-napi-h": "^1.0.5",
-    "node-addon-api": "1.6.1",
+    "node-addon-api": "^2.0.0",
     "node-gyp-build": "^4.2.1",
-    "ref-napi": "^1.5.2",
+    "ref-napi": "^2.0.1",
     "ref-struct-di": "^1.1.0"
   },
   "devDependencies": {
