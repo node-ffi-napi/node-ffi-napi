@@ -37,7 +37,7 @@
     "fs-extra": "^5.0.0",
     "mocha": "^5.0.0",
     "nyc": "^15.0.0",
-    "prebuildify": "^3.0.4",
+    "prebuildify": "^4.0.0",
     "prebuildify-ci": "^1.0.5",
     "ref-array-di": "^1.2.1"
   },
