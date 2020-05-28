@@ -43,7 +43,7 @@
   },
   "scripts": {
     "install": "node-gyp-build",
-    "prebuild": "prebuildify --napi",
+    "prebuild": "prebuildify --napi --tag-armv",
     "prepack": "prebuildify-ci download && ([ $(ls prebuilds | wc -l) = '4' ] || (echo 'Some prebuilds are missing'; exit 1))",
     "test": "node-gyp rebuild --directory test && nyc mocha --expose-gc --reporter spec"
   },
