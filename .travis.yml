@@ -25,6 +25,11 @@ node_js:
   - "14"
 
 jobs:
+  include:
+      - os: linux
+        arch: arm64
+        node_js: 12
+        env: CXX=g++-4.9
   exclude:
       - os: osx
         env: CXX=g++-4.9
