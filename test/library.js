@@ -3,6 +3,7 @@ const assert = require('assert');
 const ref = require('ref-napi');
 const Struct = require('ref-struct-di')(ref);
 const ffi = require('../');
+const DynamicLibrary = ffi.DynamicLibrary;
 const Library = ffi.Library;
 
 describe('Library', function () {
@@ -46,6 +47,15 @@ describe('Library', function () {
   it('should accept a lib name as the first argument', function () {
     const lib = process.platform == 'win32' ? 'msvcrt' : 'libm';
     const libm = new Library(lib, {
+        'ceil': [ 'double', [ 'double' ] ]
+    });
+    assert(typeof libm.ceil === 'function');
+    assert(libm.ceil(1.1) === 2);
+  })
+
+  it('should accept a DynamicLibrary instance as the first argument', function () {
+    const lib = process.platform == 'win32' ? 'msvcrt' : 'libm';
+    const libm = new Library(new DynamicLibrary(lib + ffi.LIB_EXT, DynamicLibrary.FLAGS.RTLD_NOW), {
         'ceil': [ 'double', [ 'double' ] ]
     });
     assert(typeof libm.ceil === 'function');
