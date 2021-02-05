@@ -50,7 +50,7 @@
     ],
   },
 
-  # Compile .asm files on Windows
+  # Compile .S files on Windows
   'conditions': [
     ['OS=="win"', {
       'target_defaults': {
@@ -63,7 +63,27 @@
         ],
         'rules': [
           {
-            'rule_name': 'assembler',
+            'rule_name': 'preprocess_asm',
+            'msvs_cygwin_shell': 0,
+            'extension': 'S',
+            'inputs': [
+            ],
+            'outputs': [
+              '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).asm',
+            ],
+            'action': [
+              'call',
+              'preprocess_asm.cmd',
+                'include',
+                'config/<(OS)/<(target_arch)',
+                '<(RULE_INPUT_PATH)',
+                '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).asm',
+            ],
+            'message': 'Preprocessing assembly file <(RULE_INPUT_PATH)',
+            'process_outputs_as_sources': 1,
+          },
+          {
+            'rule_name': 'build_asm',
             'msvs_cygwin_shell': 0,
             'extension': 'asm',
             'inputs': [
@@ -72,7 +92,8 @@
               '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj',
             ],
             'action': [
-              '<@(ml)', '/c', '/Fo<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj', '<(RULE_INPUT_PATH)'
+              '<@(ml)', '/c', '/Fo<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj',
+                '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).asm',
             ],
             'message': 'Building assembly file <(RULE_INPUT_PATH)',
             'process_outputs_as_sources': 1,
@@ -136,24 +157,25 @@
               'sources': [ 'src/x86/ffi.c' ],
               'conditions': [
                 ['OS=="win"', {
-                  'sources': [ 'src/x86/sysv_intel.asm' ],
+                  'sources': [ 'src/x86/sysv_intel.S' ],
                 }, {
                   'sources': [ 'src/x86/sysv.S' ],
-                }]
+                }],
               ],
             }],
             ['target_arch=="x64"', {
+              'sources': [
+                'src/x86/ffiw64.c',
+              ],
               'conditions': [
                 ['OS=="win"', {
                   'sources': [
-                    'src/x86/ffiw64.c',
-                    'src/x86/win64_intel.asm',
+                    'src/x86/win64_intel.S',
                   ],
                 }, {
                   'sources': [
                     'src/x86/ffi64.c',
                     'src/x86/unix64.S',
-                    'src/x86/ffiw64.c',
                     'src/x86/win64.S',
                   ],
                 }]
