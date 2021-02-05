@@ -71,6 +71,9 @@ class FFI {
  */
 
 struct callback_info {
+  callback_info() {
+  }
+
   ffi_closure closure;           // the actual `ffi_closure` instance get inlined
   void* code;                    // the executable function pointer
   FunctionReference errorFunction;    // JS callback function for reporting caught exceptions for the process' event loop

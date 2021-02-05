@@ -50,7 +50,7 @@
     ],
   },
 
-  # Compile .S files on Windows
+  # Compile .asm files on Windows
   'conditions': [
     ['OS=="win"', {
       'target_defaults': {
@@ -65,7 +65,7 @@
           {
             'rule_name': 'assembler',
             'msvs_cygwin_shell': 0,
-            'extension': 'S',
+            'extension': 'asm',
             'inputs': [
             ],
             'outputs': [
@@ -131,38 +131,39 @@
             }]
           ]
         }, { # ia32 or x64
-          'sources': [
-            'src/x86/ffi.c',
-            'src/x86/ffi64.c'
-            'src/x86/ffiw64.c'
-          ],
           'conditions': [
-            ['OS=="mac"', {
-              'sources': [
-                'src/x86/darwin.S',
-                'src/x86/darwin64.S'
-              ]
+            ['target_arch=="ia32"', {
+              'sources': [ 'src/x86/ffi.c' ],
+              'conditions': [
+                ['OS=="win"', {
+                  'sources': [ 'src/x86/sysv_intel.asm' ],
+                }, {
+                  'sources': [ 'src/x86/sysv.S' ],
+                }]
+              ],
+            }],
+            ['target_arch=="x64"', {
+              'conditions': [
+                ['OS=="win"', {
+                  'sources': [
+                    'src/x86/ffiw64.c',
+                    'src/x86/win64_intel.asm',
+                  ],
+                }, {
+                  'sources': [
+                    'src/x86/ffi64.c',
+                    'src/x86/unix64.S',
+                    'src/x86/ffiw64.c',
+                    'src/x86/win64.S',
+                  ],
+                }]
+              ],
             }],
             ['OS=="win"', {
               # the libffi dlmalloc.c file has a bunch of implicit conversion
               # warnings, and the main ffi.c file contains one, so silence them
               'msvs_disabled_warnings': [ 4267 ],
-              # the ffi64.c file is never compiled on Windows
-              'sources!': [ 'src/x86/ffi64.c' ],
-              'conditions': [
-                ['target_arch=="ia32"', {
-                  'sources': [ 'src/x86/win32.S' ]
-                }, { # target_arch=="x64"
-                  'sources': [ 'src/x86/win64.S' ]
-                }]
-              ]
             }],
-            ['OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
-              'sources': [
-                'src/x86/unix64.S',
-                'src/x86/sysv.S'
-              ]
-            }]
           ]
         }],
       ]
