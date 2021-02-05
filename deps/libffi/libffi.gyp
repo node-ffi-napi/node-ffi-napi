@@ -50,7 +50,7 @@
     ],
   },
 
-  # Compile .asm files on Windows
+  # Compile .S files on Windows
   'conditions': [
     ['OS=="win"', {
       'target_defaults': {
@@ -65,7 +65,7 @@
           {
             'rule_name': 'assembler',
             'msvs_cygwin_shell': 0,
-            'extension': 'asm',
+            'extension': 'S',
             'inputs': [
             ],
             'outputs': [
@@ -126,7 +126,7 @@
         },'target_arch=="arm64"', {
           'sources': [ 'src/aarch64/ffi.c' ],
           'conditions': [
-            ['OS=="linux"', {
+            ['OS=="linux" or OS=="mac"', {
               'sources': [ 'src/aarch64/sysv.S' ]
             }]
           ]
@@ -134,6 +134,7 @@
           'sources': [
             'src/x86/ffi.c',
             'src/x86/ffi64.c'
+            'src/x86/ffiw64.c'
           ],
           'conditions': [
             ['OS=="mac"', {
@@ -150,9 +151,9 @@
               'sources!': [ 'src/x86/ffi64.c' ],
               'conditions': [
                 ['target_arch=="ia32"', {
-                  'sources': [ 'src/x86/win32.asm' ]
+                  'sources': [ 'src/x86/win32.S' ]
                 }, { # target_arch=="x64"
-                  'sources': [ 'src/x86/win64.asm' ]
+                  'sources': [ 'src/x86/win64.S' ]
                 }]
               ]
             }],

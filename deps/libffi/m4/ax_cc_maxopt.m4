@@ -1,5 +1,5 @@
 # ===========================================================================
-#       http://www.gnu.org/software/autoconf-archive/ax_cc_maxopt.html
+#       https://www.gnu.org/software/autoconf-archive/ax_cc_maxopt.html
 # ===========================================================================
 #
 # SYNOPSIS
@@ -40,7 +40,7 @@
 #   Public License for more details.
 #
 #   You should have received a copy of the GNU General Public License along
-#   with this program. If not, see <http://www.gnu.org/licenses/>.
+#   with this program. If not, see <https://www.gnu.org/licenses/>.
 #
 #   As a special exception, the respective Autoconf Macro's copyright owner
 #   gives unlimited permission to copy, distribute and modify the configure
@@ -55,7 +55,7 @@
 #   modified version of the Autoconf Macro, you may extend this special
 #   exception to the GPL to apply to your modified version as well.
 
-#serial 12
+#serial 17
 
 AC_DEFUN([AX_CC_MAXOPT],
 [
@@ -64,7 +64,7 @@ AC_REQUIRE([AX_COMPILER_VENDOR])
 AC_REQUIRE([AC_CANONICAL_HOST])
 
 AC_ARG_ENABLE(portable-binary, [AS_HELP_STRING([--enable-portable-binary], [disable compiler optimizations that would produce unportable binaries])],
-	acx_maxopt_portable=$withval, acx_maxopt_portable=no)
+	acx_maxopt_portable=$enableval, acx_maxopt_portable=no)
 
 # Try to determine "good" native compiler flags if none specified via CFLAGS
 if test "$ac_test_CFLAGS" != "set"; then
@@ -115,11 +115,19 @@ if test "$ac_test_CFLAGS" != "set"; then
 	      AX_GCC_X86_CPUID(0)
               AX_GCC_X86_CPUID(1)
 	      case $ax_cv_gcc_x86_cpuid_0 in # see AX_GCC_ARCHFLAG
-                *:756e6547:*:*) # Intel
+                *:756e6547:6c65746e:49656e69) # Intel
                   case $ax_cv_gcc_x86_cpuid_1 in
-                    *6a?:*[[234]]:*:*|*6[[789b]]?:*:*:*) icc_flags="-xK";;
-                    *f3[[347]]:*:*:*|*f4[1347]:*:*:*) icc_flags="-xP -xN -xW -xK";;
-                    *f??:*:*:*) icc_flags="-xN -xW -xK";;
+		    *0?6[[78ab]]?:*:*:*|?6[[78ab]]?:*:*:*|6[[78ab]]?:*:*:*) icc_flags="-xK" ;;
+		    *0?6[[9d]]?:*:*:*|?6[[9d]]?:*:*:*|6[[9d]]?:*:*:*|*1?65?:*:*:*) icc_flags="-xSSE2 -xB -xK" ;;
+		    *0?6e?:*:*:*|?6e?:*:*:*|6e?:*:*:*) icc_flags="-xSSE3 -xP -xO -xB -xK" ;;
+		    *0?6f?:*:*:*|?6f?:*:*:*|6f?:*:*:*|*1?66?:*:*:*) icc_flags="-xSSSE3 -xT -xB -xK" ;;
+		    *1?6[[7d]]?:*:*:*) icc_flags="-xSSE4.1 -xS -xT -xB -xK" ;;
+		    *1?6[[aef]]?:*:*:*|*2?6[[5cef]]?:*:*:*) icc_flags="-xSSE4.2 -xS -xT -xB -xK" ;;
+		    *2?6[[ad]]?:*:*:*) icc_flags="-xAVX -SSE4.2 -xS -xT -xB -xK" ;;
+		    *3?6[[ae]]?:*:*:*) icc_flags="-xCORE-AVX-I -xAVX -SSE4.2 -xS -xT -xB -xK" ;;
+		    *3?6[[cf]]?:*:*:*|*4?6[[56]]?:*:*:*) icc_flags="-xCORE-AVX2 -xCORE-AVX-I -xAVX -SSE4.2 -xS -xT -xB -xK" ;;
+		    *000?f[[346]]?:*:*:*|?f[[346]]?:*:*:*|f[[346]]?:*:*:*) icc_flags="-xSSE3 -xP -xO -xN -xW -xK" ;;
+		    *00??f??:*:*:*|??f??:*:*:*|?f??:*:*:*|f??:*:*:*) icc_flags="-xSSE2 -xN -xW -xK" ;;
                   esac ;;
               esac ;;
           esac
@@ -141,7 +149,8 @@ if test "$ac_test_CFLAGS" != "set"; then
      CFLAGS="-O3 -fomit-frame-pointer"
 
      # -malign-double for x86 systems
-     AX_CHECK_COMPILE_FLAG(-malign-double, CFLAGS="$CFLAGS -malign-double")
+     # libffi local change -- don't align double, as it changes the ABI
+     # AX_CHECK_COMPILE_FLAG(-malign-double, CFLAGS="$CFLAGS -malign-double")
 
      #  -fstrict-aliasing for gcc-2.95+
      AX_CHECK_COMPILE_FLAG(-fstrict-aliasing,
@@ -151,6 +160,11 @@ if test "$ac_test_CFLAGS" != "set"; then
      AX_CHECK_COMPILE_FLAG(-ffast-math, CFLAGS="$CFLAGS -ffast-math")
 
      AX_GCC_ARCHFLAG($acx_maxopt_portable)
+     ;;
+
+    microsoft)
+     # default optimization flags for MSVC opt builds
+     CFLAGS="-O2"
      ;;
   esac
 
