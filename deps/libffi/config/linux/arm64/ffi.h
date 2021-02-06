@@ -1,5 +1,5 @@
 /* -----------------------------------------------------------------*-C-*-
-   libffi 3.3-rc0 - Copyright (c) 2011, 2014 Anthony Green
+   libffi 3.3 - Copyright (c) 2011, 2014, 2019 Anthony Green
                     - Copyright (c) 1996-2003, 2007, 2008 Red Hat, Inc.
 
    Permission is hereby granted, free of charge, to any person
@@ -197,7 +197,7 @@ FFI_EXTERN ffi_type ffi_type_float;
 FFI_EXTERN ffi_type ffi_type_double;
 FFI_EXTERN ffi_type ffi_type_pointer;
 
-#if 1
+#if 0
 FFI_EXTERN ffi_type ffi_type_longdouble;
 #else
 #define ffi_type_longdouble ffi_type_double
@@ -206,7 +206,7 @@ FFI_EXTERN ffi_type ffi_type_longdouble;
 #ifdef FFI_TARGET_HAS_COMPLEX_TYPE
 FFI_EXTERN ffi_type ffi_type_complex_float;
 FFI_EXTERN ffi_type ffi_type_complex_double;
-#if 1
+#if 0
 FFI_EXTERN ffi_type ffi_type_complex_longdouble;
 #else
 #define ffi_type_complex_longdouble ffi_type_complex_double
@@ -288,15 +288,15 @@ FFI_API
 void ffi_java_raw_call (ffi_cif *cif,
 			void (*fn)(void),
 			void *rvalue,
-			ffi_java_raw *avalue);
+			ffi_java_raw *avalue) __attribute__((deprecated));
 #endif
 
 FFI_API
-void ffi_java_ptrarray_to_raw (ffi_cif *cif, void **args, ffi_java_raw *raw);
+void ffi_java_ptrarray_to_raw (ffi_cif *cif, void **args, ffi_java_raw *raw) __attribute__((deprecated));
 FFI_API
-void ffi_java_raw_to_ptrarray (ffi_cif *cif, ffi_java_raw *raw, void **args);
+void ffi_java_raw_to_ptrarray (ffi_cif *cif, ffi_java_raw *raw, void **args) __attribute__((deprecated));
 FFI_API
-size_t ffi_java_raw_size (ffi_cif *cif);
+size_t ffi_java_raw_size (ffi_cif *cif) __attribute__((deprecated));
 
 /* ---- Definitions for closures ----------------------------------------- */
 
@@ -421,14 +421,14 @@ FFI_API ffi_status
 ffi_prep_java_raw_closure (ffi_java_raw_closure*,
 		           ffi_cif *cif,
 		           void (*fun)(ffi_cif*,void*,ffi_java_raw*,void*),
-		           void *user_data);
+		           void *user_data) __attribute__((deprecated));
 
 FFI_API ffi_status
 ffi_prep_java_raw_closure_loc (ffi_java_raw_closure*,
 			       ffi_cif *cif,
 			       void (*fun)(ffi_cif*,void*,ffi_java_raw*,void*),
 			       void *user_data,
-			       void *codeloc);
+			       void *codeloc) __attribute__((deprecated));
 #endif
 
 #endif /* FFI_CLOSURES */
@@ -488,7 +488,7 @@ ffi_status ffi_get_struct_offsets (ffi_abi abi, ffi_type *struct_type,
 #define FFI_TYPE_INT        1
 #define FFI_TYPE_FLOAT      2    
 #define FFI_TYPE_DOUBLE     3
-#if 1
+#if 0
 #define FFI_TYPE_LONGDOUBLE 4
 #else
 #define FFI_TYPE_LONGDOUBLE FFI_TYPE_DOUBLE

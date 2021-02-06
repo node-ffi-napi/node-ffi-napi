@@ -13,7 +13,7 @@
 /* #undef C_ALLOCA */
 
 /* Define to the flags needed for the .section .eh_frame directive. */
-#define EH_FRAME_FLAGS "a"
+#define EH_FRAME_FLAGS "aw"
 
 /* Define this if you want extra debugging. */
 /* #undef FFI_DEBUG */
@@ -41,7 +41,7 @@
 #define HAVE_ALLOCA_H 1
 
 /* Define if your assembler supports .cfi_* directives. */
-#define HAVE_AS_CFI_PSEUDO_OP 1
+/* #undef HAVE_AS_CFI_PSEUDO_OP */
 
 /* Define if your assembler supports .register. */
 /* #undef HAVE_AS_REGISTER_PSEUDO_OP */
@@ -69,7 +69,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define if you have the long double type and it is bigger than a double */
-#define HAVE_LONG_DOUBLE 1
+/* #undef HAVE_LONG_DOUBLE */
 
 /* Define if you support more than one size of the long double type */
 /* #undef HAVE_LONG_DOUBLE_VARIANT */
@@ -96,7 +96,7 @@
 #define HAVE_MMAP_FILE 1
 
 /* Define if .eh_frame sections should be read-only. */
-#define HAVE_RO_EH_FRAME 1
+/* #undef HAVE_RO_EH_FRAME */
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -128,9 +128,6 @@
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-/* #undef NO_MINUS_C_MINUS_O */
-
 /* Name of package */
 #define PACKAGE "libffi"
 
@@ -141,7 +138,7 @@
 #define PACKAGE_NAME "libffi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libffi 3.3-rc0"
+#define PACKAGE_STRING "libffi 3.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libffi"
@@ -150,13 +147,13 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.3-rc0"
+#define PACKAGE_VERSION "3.3"
 
 /* The size of `double', as computed by sizeof. */
 #define SIZEOF_DOUBLE 8
 
 /* The size of `long double', as computed by sizeof. */
-#define SIZEOF_LONG_DOUBLE 16
+#define SIZEOF_LONG_DOUBLE 8
 
 /* The size of `size_t', as computed by sizeof. */
 #define SIZEOF_SIZE_T 8
@@ -173,14 +170,14 @@
 #define STDC_HEADERS 1
 
 /* Define if symbols are underscored. */
-/* #undef SYMBOL_UNDERSCORE */
+#define SYMBOL_UNDERSCORE 1
 
 /* Define this if you are using Purify and want to suppress spurious messages.
    */
 /* #undef USING_PURIFY */
 
 /* Version number of package */
-#define VERSION "3.3-rc0"
+#define VERSION "3.3"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
