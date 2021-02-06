@@ -38,7 +38,7 @@
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
-#define HAVE_ALLOCA_H 1
+/* #undef HAVE_ALLOCA_H */
 
 /* Define if your assembler supports .cfi_* directives. */
 /* #undef HAVE_AS_CFI_PSEUDO_OP */
@@ -60,16 +60,16 @@
 #define HAVE_AS_X86_PCREL 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-#define HAVE_DLFCN_H 1
+/* #undef HAVE_DLFCN_H */
 
 /* Define if __attribute__((visibility("hidden"))) is supported. */
-#define HAVE_HIDDEN_VISIBILITY_ATTRIBUTE 1
+/* #undef HAVE_HIDDEN_VISIBILITY_ATTRIBUTE */
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
 /* Define if you have the long double type and it is bigger than a double */
-/* #undef HAVE_LONG_DOUBLE */
+#define HAVE_LONG_DOUBLE 1
 
 /* Define if you support more than one size of the long double type */
 /* #undef HAVE_LONG_DOUBLE_VARIANT */
@@ -81,19 +81,19 @@
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `mkostemp' function. */
-#define HAVE_MKOSTEMP 1
+/* #undef HAVE_MKOSTEMP */
 
 /* Define to 1 if you have the `mmap' function. */
-#define HAVE_MMAP 1
+/* #undef HAVE_MMAP */
 
 /* Define if mmap with MAP_ANON(YMOUS) works. */
-#define HAVE_MMAP_ANON 1
+/* #undef HAVE_MMAP_ANON */
 
 /* Define if mmap of /dev/zero works. */
-#define HAVE_MMAP_DEV_ZERO 1
+/* #undef HAVE_MMAP_DEV_ZERO */
 
 /* Define if read-only mmap of a plain file works. */
-#define HAVE_MMAP_FILE 1
+/* #undef HAVE_MMAP_FILE */
 
 /* Define if .eh_frame sections should be read-only. */
 /* #undef HAVE_RO_EH_FRAME */
@@ -111,7 +111,7 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/mman.h> header file. */
-#define HAVE_SYS_MMAN_H 1
+/* #undef HAVE_SYS_MMAN_H */
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -153,7 +153,7 @@
 #define SIZEOF_DOUBLE 8
 
 /* The size of `long double', as computed by sizeof. */
-#define SIZEOF_LONG_DOUBLE 8
+#define SIZEOF_LONG_DOUBLE 16
 
 /* The size of `size_t', as computed by sizeof. */
 #define SIZEOF_SIZE_T 8
@@ -170,7 +170,7 @@
 #define STDC_HEADERS 1
 
 /* Define if symbols are underscored. */
-#define SYMBOL_UNDERSCORE 1
+/* #undef SYMBOL_UNDERSCORE */
 
 /* Define this if you are using Purify and want to suppress spurious messages.
    */
