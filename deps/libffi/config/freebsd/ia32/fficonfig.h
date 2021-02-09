@@ -13,7 +13,7 @@
 /* #undef C_ALLOCA */
 
 /* Define to the flags needed for the .section .eh_frame directive. */
-#define EH_FRAME_FLAGS "aw"
+#define EH_FRAME_FLAGS "a"
 
 /* Define this if you want extra debugging. */
 /* #undef FFI_DEBUG */
@@ -38,10 +38,10 @@
 
 /* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
    */
-#define HAVE_ALLOCA_H 1
+/* #undef HAVE_ALLOCA_H */
 
 /* Define if your assembler supports .cfi_* directives. */
-/* #undef HAVE_AS_CFI_PSEUDO_OP */
+#define HAVE_AS_CFI_PSEUDO_OP 1
 
 /* Define if your assembler supports .register. */
 /* #undef HAVE_AS_REGISTER_PSEUDO_OP */
@@ -69,7 +69,7 @@
 #define HAVE_INTTYPES_H 1
 
 /* Define if you have the long double type and it is bigger than a double */
-/* #undef HAVE_LONG_DOUBLE */
+#define HAVE_LONG_DOUBLE 1
 
 /* Define if you support more than one size of the long double type */
 /* #undef HAVE_LONG_DOUBLE_VARIANT */
@@ -96,7 +96,7 @@
 #define HAVE_MMAP_FILE 1
 
 /* Define if .eh_frame sections should be read-only. */
-/* #undef HAVE_RO_EH_FRAME */
+#define HAVE_RO_EH_FRAME 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #define HAVE_STDINT_H 1
@@ -153,10 +153,10 @@
 #define SIZEOF_DOUBLE 8
 
 /* The size of `long double', as computed by sizeof. */
-#define SIZEOF_LONG_DOUBLE 8
+#define SIZEOF_LONG_DOUBLE 12
 
 /* The size of `size_t', as computed by sizeof. */
-#define SIZEOF_SIZE_T 8
+#define SIZEOF_SIZE_T 4
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -170,7 +170,7 @@
 #define STDC_HEADERS 1
 
 /* Define if symbols are underscored. */
-#define SYMBOL_UNDERSCORE 1
+/* #undef SYMBOL_UNDERSCORE */
 
 /* Define this if you are using Purify and want to suppress spurious messages.
    */
