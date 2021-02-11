@@ -56,9 +56,11 @@
       'target_defaults': {
         'conditions': [
           ['target_arch=="ia32"', {
-            'variables': { 'ml': ['ml', '/nologo', '/safeseh' ] }
+            'variables': { 'ml': ['ml', '/c', '/nologo', '/safeseh' ] }
+          }, 'target_arch=="arm64"', {
+            'variables': { 'ml': ['armasm64', '/nologo' ] }
           }, {
-            'variables': { 'ml': ['ml64', '/nologo' ] }
+            'variables': { 'ml': ['ml64', '/c', '/nologo' ] }
           }]
         ],
         'rules': [
@@ -92,7 +94,7 @@
               '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj',
             ],
             'action': [
-              '<@(ml)', '/c', '/Fo<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj',
+              '<@(ml)', '/Fo<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj',
                 '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).asm',
             ],
             'message': 'Building assembly file <(RULE_INPUT_PATH)',
