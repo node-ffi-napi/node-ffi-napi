@@ -149,7 +149,10 @@
           'conditions': [
             ['OS=="linux" or OS=="mac"', {
               'sources': [ 'src/aarch64/sysv.S' ]
-            }]
+            }],
+            ['OS=="win"', {
+              'sources': [ 'src/aarch64/win64_armasm.S' ]
+            }],
           ]
         }, { # ia32 or x64
           'conditions': [
