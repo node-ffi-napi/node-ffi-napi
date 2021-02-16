@@ -186,6 +186,12 @@
                 }]
               ],
             }],
+            ['target_arch=="s390x"', {
+              'sources': [
+                'src/s390x/ffi.c',
+                'src/s390x/sysv.S',
+              ],
+            }],
             ['OS=="win"', {
               # the libffi dlmalloc.c file has a bunch of implicit conversion
               # warnings, and the main ffi.c file contains one, so silence them
