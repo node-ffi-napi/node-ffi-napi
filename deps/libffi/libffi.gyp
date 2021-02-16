@@ -188,8 +188,8 @@
             }],
             ['target_arch=="s390x"', {
               'sources': [
-                'src/s390x/ffi.c',
-                'src/s390x/sysv.S',
+                'src/s390/ffi.c',
+                'src/s390/sysv.S',
               ],
             }],
             ['OS=="win"', {
