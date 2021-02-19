@@ -50,20 +50,42 @@
     ],
   },
 
-  # Compile .asm files on Windows
+  # Compile .S files on Windows
   'conditions': [
     ['OS=="win"', {
       'target_defaults': {
         'conditions': [
           ['target_arch=="ia32"', {
-            'variables': { 'ml': ['ml', '/nologo', '/safeseh' ] }
+            'variables': { 'ml': ['ml', '/c', '/nologo', '/safeseh' ] }
+          }, 'target_arch=="arm64"', {
+            'variables': { 'ml': ['armasm64', '/nologo' ] }
           }, {
-            'variables': { 'ml': ['ml64', '/nologo' ] }
+            'variables': { 'ml': ['ml64', '/c', '/nologo' ] }
           }]
         ],
         'rules': [
           {
-            'rule_name': 'assembler',
+            'rule_name': 'preprocess_asm',
+            'msvs_cygwin_shell': 0,
+            'extension': 'S',
+            'inputs': [
+            ],
+            'outputs': [
+              '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).asm',
+            ],
+            'action': [
+              'call',
+              'preprocess_asm.cmd',
+                'include',
+                'config/<(OS)/<(target_arch)',
+                '<(RULE_INPUT_PATH)',
+                '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).asm',
+            ],
+            'message': 'Preprocessing assembly file <(RULE_INPUT_PATH)',
+            'process_outputs_as_sources': 1,
+          },
+          {
+            'rule_name': 'build_asm',
             'msvs_cygwin_shell': 0,
             'extension': 'asm',
             'inputs': [
@@ -72,7 +94,8 @@
               '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj',
             ],
             'action': [
-              '<@(ml)', '/c', '/Fo<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj', '<(RULE_INPUT_PATH)'
+              '<@(ml)', '/Fo<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).obj',
+                '<(INTERMEDIATE_DIR)/<(RULE_INPUT_ROOT).asm',
             ],
             'message': 'Building assembly file <(RULE_INPUT_PATH)',
             'process_outputs_as_sources': 1,
@@ -126,42 +149,54 @@
         },'target_arch=="arm64"', {
           'sources': [ 'src/aarch64/ffi.c' ],
           'conditions': [
-            ['OS=="linux"', {
+            ['OS=="linux" or OS=="mac"', {
               'sources': [ 'src/aarch64/sysv.S' ]
-            }]
+            }],
+            ['OS=="win"', {
+              'sources': [ 'src/aarch64/win64_armasm.S' ]
+            }],
           ]
         }, { # ia32 or x64
-          'sources': [
-            'src/x86/ffi.c',
-            'src/x86/ffi64.c'
-          ],
           'conditions': [
-            ['OS=="mac"', {
+            ['target_arch=="ia32"', {
+              'sources': [ 'src/x86/ffi.c' ],
+              'conditions': [
+                ['OS=="win"', {
+                  'sources': [ 'src/x86/sysv_intel.S' ],
+                }, {
+                  'sources': [ 'src/x86/sysv.S' ],
+                }],
+              ],
+            }],
+            ['target_arch=="x64"', {
               'sources': [
-                'src/x86/darwin.S',
-                'src/x86/darwin64.S'
-              ]
+                'src/x86/ffiw64.c',
+              ],
+              'conditions': [
+                ['OS=="win"', {
+                  'sources': [
+                    'src/x86/win64_intel.S',
+                  ],
+                }, {
+                  'sources': [
+                    'src/x86/ffi64.c',
+                    'src/x86/unix64.S',
+                    'src/x86/win64.S',
+                  ],
+                }]
+              ],
+            }],
+            ['target_arch=="s390x"', {
+              'sources': [
+                'src/s390/ffi.c',
+                'src/s390/sysv.S',
+              ],
             }],
             ['OS=="win"', {
               # the libffi dlmalloc.c file has a bunch of implicit conversion
               # warnings, and the main ffi.c file contains one, so silence them
               'msvs_disabled_warnings': [ 4267 ],
-              # the ffi64.c file is never compiled on Windows
-              'sources!': [ 'src/x86/ffi64.c' ],
-              'conditions': [
-                ['target_arch=="ia32"', {
-                  'sources': [ 'src/x86/win32.asm' ]
-                }, { # target_arch=="x64"
-                  'sources': [ 'src/x86/win64.asm' ]
-                }]
-              ]
             }],
-            ['OS=="linux" or OS=="freebsd" or OS=="openbsd" or OS=="solaris"', {
-              'sources': [
-                'src/x86/unix64.S',
-                'src/x86/sysv.S'
-              ]
-            }]
           ]
         }],
       ]

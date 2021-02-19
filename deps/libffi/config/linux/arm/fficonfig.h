@@ -21,13 +21,16 @@
 /* Cannot use PROT_EXEC on this target, so, we revert to alternative means */
 /* #undef FFI_EXEC_TRAMPOLINE_TABLE */
 
+/* Define this if you want to enable pax emulated trampolines */
+/* #undef FFI_MMAP_EXEC_EMUTRAMP_PAX */
+
 /* Cannot use malloc on this target, so, we revert to alternative means */
 /* #undef FFI_MMAP_EXEC_WRIT */
 
-/* Define this is you do not want support for the raw API. */
+/* Define this if you do not want support for the raw API. */
 /* #undef FFI_NO_RAW_API */
 
-/* Define this is you do not want support for aggregate types. */
+/* Define this if you do not want support for aggregate types. */
 /* #undef FFI_NO_STRUCTS */
 
 /* Define to 1 if you have `alloca', as a function or macro. */
@@ -37,21 +40,18 @@
    */
 #define HAVE_ALLOCA_H 1
 
-/* Define if your assembler supports .ascii. */
-/* #undef HAVE_AS_ASCII_PSEUDO_OP */
-
 /* Define if your assembler supports .cfi_* directives. */
-#define HAVE_AS_CFI_PSEUDO_OP 1
+/* #undef HAVE_AS_CFI_PSEUDO_OP */
 
 /* Define if your assembler supports .register. */
 /* #undef HAVE_AS_REGISTER_PSEUDO_OP */
 
+/* Define if the compiler uses zarch features. */
+/* #undef HAVE_AS_S390_ZARCH */
+
 /* Define if your assembler and linker support unaligned PC relative relocs.
    */
 /* #undef HAVE_AS_SPARC_UA_PCREL */
-
-/* Define if your assembler supports .string. */
-/* #undef HAVE_AS_STRING_PSEUDO_OP */
 
 /* Define if your assembler supports unwind section type. */
 /* #undef HAVE_AS_X86_64_UNWIND_SECTION_TYPE */
@@ -71,11 +71,17 @@
 /* Define if you have the long double type and it is bigger than a double */
 /* #undef HAVE_LONG_DOUBLE */
 
+/* Define if you support more than one size of the long double type */
+/* #undef HAVE_LONG_DOUBLE_VARIANT */
+
 /* Define to 1 if you have the `memcpy' function. */
 #define HAVE_MEMCPY 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the `mkostemp' function. */
+#define HAVE_MKOSTEMP 1
 
 /* Define to 1 if you have the `mmap' function. */
 #define HAVE_MMAP 1
@@ -116,24 +122,23 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
-#define LT_OBJDIR ".libs/"
+/* Define to 1 if GNU symbol versioning is used for libatomic. */
+/* #undef LIBFFI_GNU_SYMBOL_VERSIONING */
 
-/* Define to 1 if your C compiler doesn't accept -c and -o together. */
-/* #undef NO_MINUS_C_MINUS_O */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#define LT_OBJDIR ".libs/"
 
 /* Name of package */
 #define PACKAGE "libffi"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "http://github.com/atgreen/libffi/issues"
+#define PACKAGE_BUGREPORT "http://github.com/libffi/libffi/issues"
 
 /* Define to the full name of this package. */
 #define PACKAGE_NAME "libffi"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libffi 3.0.11"
+#define PACKAGE_STRING "libffi 3.3"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libffi"
@@ -142,13 +147,16 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "3.0.11"
+#define PACKAGE_VERSION "3.3"
 
 /* The size of `double', as computed by sizeof. */
 #define SIZEOF_DOUBLE 8
 
 /* The size of `long double', as computed by sizeof. */
 #define SIZEOF_LONG_DOUBLE 8
+
+/* The size of `size_t', as computed by sizeof. */
+#define SIZEOF_SIZE_T 8
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
@@ -162,14 +170,14 @@
 #define STDC_HEADERS 1
 
 /* Define if symbols are underscored. */
-/* #undef SYMBOL_UNDERSCORE */
+#define SYMBOL_UNDERSCORE 1
 
 /* Define this if you are using Purify and want to suppress spurious messages.
    */
 /* #undef USING_PURIFY */
 
 /* Version number of package */
-#define VERSION "3.0.11"
+#define VERSION "3.3"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */
@@ -189,7 +197,11 @@
 
 #ifdef HAVE_HIDDEN_VISIBILITY_ATTRIBUTE
 #ifdef LIBFFI_ASM
+#ifdef __APPLE__
+#define FFI_HIDDEN(name) .private_extern name
+#else
 #define FFI_HIDDEN(name) .hidden name
+#endif
 #else
 #define FFI_HIDDEN __attribute__ ((visibility ("hidden")))
 #endif
