@@ -23,3 +23,9 @@ jobs:
         run: |
           npm install
           npm test
+      - name: build with node-gyp
+        shell: bash
+        run: |
+          npm install -g node-gyp
+          node-gyp configure
+          node-gyp rebuild
