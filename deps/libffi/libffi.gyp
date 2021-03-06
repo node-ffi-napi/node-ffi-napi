@@ -67,7 +67,7 @@
           {
             'rule_name': 'preprocess_asm',
             'msvs_cygwin_shell': 0,
-            'extension': 'S',
+            'extension': 'preasm',
             'inputs': [
             ],
             'outputs': [
@@ -153,7 +153,7 @@
               'sources': [ 'src/aarch64/sysv.S' ]
             }],
             ['OS=="win"', {
-              'sources': [ 'src/aarch64/win64_armasm.S' ]
+              'sources': [ 'src/aarch64/win64_armasm.preasm' ]
             }],
           ]
         }, { # ia32 or x64
@@ -162,7 +162,7 @@
               'sources': [ 'src/x86/ffi.c' ],
               'conditions': [
                 ['OS=="win"', {
-                  'sources': [ 'src/x86/sysv_intel.S' ],
+                  'sources': [ 'src/x86/sysv_intel.preasm' ],
                 }, {
                   'sources': [ 'src/x86/sysv.S' ],
                 }],
@@ -175,7 +175,7 @@
               'conditions': [
                 ['OS=="win"', {
                   'sources': [
-                    'src/x86/win64_intel.S',
+                    'src/x86/win64_intel.preasm',
                   ],
                 }, {
                   'sources': [
