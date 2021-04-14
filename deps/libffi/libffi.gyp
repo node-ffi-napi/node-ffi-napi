@@ -149,7 +149,7 @@
         },'target_arch=="arm64"', {
           'sources': [ 'src/aarch64/ffi.c' ],
           'conditions': [
-            ['OS=="linux" or OS=="mac"', {
+            ['OS=="linux" or OS=="mac" or OS=="android"', {
               'sources': [ 'src/aarch64/sysv.S' ]
             }],
             ['OS=="win"', {
