@@ -6,13 +6,12 @@ lib-cov
 *.out
 *.pid
 *.gz
+*.tgz
 
 pids
 logs
 results
 
-node_modules
-npm-debug.log
 .nyc_output/
 coverage
 build
@@ -25,4 +24,5 @@ deps/libffi/include/ffitarget.h
 deps/libffi/local.exp
 vgcore.*
 
-prebuilds/
+/prebuilds
+node_modules

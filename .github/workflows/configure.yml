@@ -3,29 +3,106 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  build_and_test:
+  build:
     runs-on: ${{ matrix.os }}
+
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - uses: actions/setup-node@v2
+
+      - name: Set up Node.js LTS
+        uses: actions/setup-node@v2
         with:
-          node-version: '14'
-      - name: install dependencies and test
-        shell: bash
+          node-version: lts/*
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+
+      - name: Prebuildify for ${{ matrix.os }}
+        run: npm run prebuild
+
+      - name: Upload artifacts for ${{ matrix.os }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: prebuilds
+          path: prebuilds
+
+  test:
+    needs: build
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        node: [12, 14, 16]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Set up Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: Update node-gyp for Node.js <= 14 on Windows
+        if: matrix.os == 'windows-latest' && matrix.node <= '14'
         run: |
-          npm install
-          npm test
-      - name: build with node-gyp
-        shell: bash
-        run: |
-          npm install -g node-gyp
-          node-gyp configure
-          node-gyp rebuild
+          $node_path = Get-Command node | Select-Object -ExpandProperty Source | Split-Path
+          cd "$node_path\node_modules\npm\node_modules\npm-lifecycle"
+          npm install node-gyp@latest
+
+      - name: Download prebuilt artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: prebuilds
+          path: prebuilds
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Test
+        run: npm test
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: lts/*
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Download prebuilt artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: prebuilds
+          path: prebuilds
+
+      - name: Publish
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
