@@ -38,13 +38,11 @@
     "mocha": "^7.1.1",
     "nyc": "^15.0.0",
     "prebuildify": "^4.0.0",
-    "prebuildify-ci": "^1.0.5",
     "ref-array-di": "^1.2.1"
   },
   "scripts": {
     "install": "node-gyp-build",
     "prebuild": "prebuildify --napi --tag-armv --tag-uv",
-    "prepack": "prebuildify-ci download && ([ $(ls prebuilds | wc -l) = '5' ] || (echo 'Some prebuilds are missing'; exit 1))",
     "test": "node-gyp rebuild --directory test && nyc mocha --expose-gc --reporter spec"
   },
   "repository": {
