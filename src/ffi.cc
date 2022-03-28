@@ -14,6 +14,7 @@ InstanceData* InstanceData::Get(Env env) {
 }
 
 void InstanceData::Dispose() {
+  if (async.type != UV_ASYNC) return;
   uv_close(reinterpret_cast<uv_handle_t*>(&async), [](uv_handle_t* handle) {
     InstanceData* self = static_cast<InstanceData*>(handle->data);
     uv_mutex_destroy(&self->mutex);
