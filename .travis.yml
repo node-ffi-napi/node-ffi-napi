@@ -30,6 +30,11 @@ jobs:
         arch: arm64
         node_js: 12
         env: CXX=g++-4.9
+      - os: osx
+        arch: arm64
+        osx_image: xcode12.5
+        node_js: 16
+        env: CXX=clang++
   exclude:
       - os: osx
         env: CXX=g++-4.9
