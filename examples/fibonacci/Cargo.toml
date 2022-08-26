@@ -1,0 +1,11 @@
+[package]
+name = "fibo"
+version = "0.1.0"
+edition = "2021"
+
+# This tells rust that we want to expose the lib in C like interface
+[lib]
+name = "fibo"
+crate-type = ["cdylib"]
+
+[dependencies]

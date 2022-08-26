@@ -26,3 +26,5 @@ deps/libffi/local.exp
 vgcore.*
 
 prebuilds/
+examples/fibonacci/target
+examples/fibonacci/Cargo.lock
