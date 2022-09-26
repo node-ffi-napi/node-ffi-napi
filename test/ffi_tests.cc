@@ -269,10 +269,10 @@ Object Initialize(Env env, Object exports) {
   float x = 2.3f;
 #endif
 
-  exports["atoi"] = WrapPointer(env, atoi);
+  exports["atoi"] = WrapPointer(env, atoi,1);
   int (*absPtr)(int)(abs);
-  exports["abs"] = WrapPointer(env, absPtr);
-  exports["sprintf"] = WrapPointer(env, sprintf);
+  exports["abs"] = WrapPointer(env, absPtr,1);
+  exports["sprintf"] = WrapPointer(env, sprintf,1);
 
   // hard-coded `strtoul` binding, for the benchmarks
   exports["strtoul"] = Function::New(env, Strtoul);
@@ -282,18 +282,18 @@ Object Initialize(Env env, Object exports) {
   exports["call_cb_async"] = Function::New(env, CallCbAsync);
 
   // also need to test these custom functions
-  exports["double_box"] = WrapPointer(env, double_box);
-  exports["double_box_ptr"] = WrapPointer(env, double_box_ptr);
-  exports["area_box"] = WrapPointer(env, area_box);
-  exports["area_box_ptr"] = WrapPointer(env, area_box_ptr);
-  exports["create_box"] = WrapPointer(env, create_box);
-  exports["add_boxes"] = WrapPointer(env, add_boxes);
-  exports["int_array"] = WrapPointer(env, int_array);
-  exports["array_in_struct"] = WrapPointer(env, array_in_struct);
-  exports["callback_func"] = WrapPointer(env, callback_func);
-  exports["play_ping_pong"] = WrapPointer(env, play_ping_pong);
-  exports["test_169"] = WrapPointer(env, test_169);
-  exports["test_ref_56"] = WrapPointer(env, test_ref_56);
+  exports["double_box"] = WrapPointer(env, double_box,1);
+  exports["double_box_ptr"] = WrapPointer(env, double_box_ptr,1);
+  exports["area_box"] = WrapPointer(env, area_box,1);
+  exports["area_box_ptr"] = WrapPointer(env, area_box_ptr,1);
+  exports["create_box"] = WrapPointer(env, create_box,1);
+  exports["add_boxes"] = WrapPointer(env, add_boxes,1);
+  exports["int_array"] = WrapPointer(env, int_array,1);
+  exports["array_in_struct"] = WrapPointer(env, array_in_struct,1);
+  exports["callback_func"] = WrapPointer(env, callback_func,1);
+  exports["play_ping_pong"] = WrapPointer(env, play_ping_pong,1);
+  exports["test_169"] = WrapPointer(env, test_169,1);
+  exports["test_ref_56"] = WrapPointer(env, test_ref_56,1);
 
   return exports;
 }
