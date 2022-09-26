@@ -44,8 +44,8 @@ void CallbackInfo::DispatchToV8(callback_info* info, void* retval, void** parame
     } else {
       // invoke the registered callback function
       Value e = info->function.MakeCallback(Object::New(env), {
-        WrapPointer(env, retval, info->resultSize),
-        WrapPointer(env, parameters, sizeof(char*) * info->argc)
+      WrapPointer(env, retval, std::max<size_t>(info->resultSize,1)),
+      WrapPointer(env, parameters, std::max<size_t>(sizeof(char*) * info->argc,1))
       });
       if (!e.IsUndefined()) {
         if (dispatched) {
