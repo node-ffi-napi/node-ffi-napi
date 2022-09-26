@@ -40,12 +40,12 @@ Object FFI::InitializeStaticFunctions(Env env) {
   Object o = Object::New(env);
 
   // dl functions used by the DynamicLibrary JS class
-  o["dlopen"] = WrapPointer(env, dlopen);
-  o["dlclose"] = WrapPointer(env, dlclose);
-  o["dlsym"] = WrapPointer(env, dlsym);
-  o["dlerror"] = WrapPointer(env, dlerror);
+  o["dlopen"] = WrapPointer(env, dlopen,1);
+  o["dlclose"] = WrapPointer(env, dlclose,1);
+  o["dlsym"] = WrapPointer(env, dlsym,1);
+  o["dlerror"] = WrapPointer(env, dlerror,1);
 
-  o["_errno"] = WrapPointer(env, __ffi_errno);
+  o["_errno"] = WrapPointer(env, __ffi_errno,1);
 
   return o;
 }
@@ -118,16 +118,16 @@ void FFI::InitializeBindings(Env env, Object target) {
 
   /* flags for dlsym() */
 #ifdef RTLD_NEXT
-  target["RTLD_NEXT"] = WrapPointer(env, RTLD_NEXT);
+  target["RTLD_NEXT"] = WrapPointer(env, RTLD_NEXT,1);
 #endif
 #ifdef RTLD_DEFAULT
-  target["RTLD_DEFAULT"] = WrapPointer(env, RTLD_DEFAULT);
+  target["RTLD_DEFAULT"] = WrapPointer(env, RTLD_DEFAULT,1);
 #endif
 #ifdef RTLD_SELF
-  target["RTLD_SELF"] = WrapPointer(env, RTLD_SELF);
+  target["RTLD_SELF"] = WrapPointer(env, RTLD_SELF,1);
 #endif
 #ifdef RTLD_MAIN_ONLY
-  target["RTLD_MAIN_ONLY"] = WrapPointer(env, RTLD_MAIN_ONLY);
+  target["RTLD_MAIN_ONLY"] = WrapPointer(env, RTLD_MAIN_ONLY,1);
 #endif
 
   target["FFI_ARG_SIZE"] = Number::New(env, sizeof(ffi_arg));
@@ -136,28 +136,28 @@ void FFI::InitializeBindings(Env env, Object target) {
   target["FFI_CIF_SIZE"] = Number::New(env, sizeof(ffi_cif));
 
   Object ftmap = Object::New(env);
-  ftmap["void"] = WrapPointer(env, &ffi_type_void);
-  ftmap["uint8"] = WrapPointer(env, &ffi_type_uint8);
-  ftmap["int8"] = WrapPointer(env, &ffi_type_sint8);
-  ftmap["uint16"] = WrapPointer(env, &ffi_type_uint16);
-  ftmap["int16"] = WrapPointer(env, &ffi_type_sint16);
-  ftmap["uint32"] = WrapPointer(env, &ffi_type_uint32);
-  ftmap["int32"] = WrapPointer(env, &ffi_type_sint32);
-  ftmap["uint64"] = WrapPointer(env, &ffi_type_uint64);
-  ftmap["int64"] = WrapPointer(env, &ffi_type_sint64);
-  ftmap["uchar"] = WrapPointer(env, &ffi_type_uchar);
-  ftmap["char"] = WrapPointer(env, &ffi_type_schar);
-  ftmap["ushort"] = WrapPointer(env, &ffi_type_ushort);
-  ftmap["short"] = WrapPointer(env, &ffi_type_sshort);
-  ftmap["uint"] = WrapPointer(env, &ffi_type_uint);
-  ftmap["int"] = WrapPointer(env, &ffi_type_sint);
-  ftmap["float"] = WrapPointer(env, &ffi_type_float);
-  ftmap["double"] = WrapPointer(env, &ffi_type_double);
-  ftmap["pointer"] = WrapPointer(env, &ffi_type_pointer);
+  ftmap["void"] = WrapPointer(env, &ffi_type_void,1);
+  ftmap["uint8"] = WrapPointer(env, &ffi_type_uint8,1);
+  ftmap["int8"] = WrapPointer(env, &ffi_type_sint8,1);
+  ftmap["uint16"] = WrapPointer(env, &ffi_type_uint16,1);
+  ftmap["int16"] = WrapPointer(env, &ffi_type_sint16,1);
+  ftmap["uint32"] = WrapPointer(env, &ffi_type_uint32,1);
+  ftmap["int32"] = WrapPointer(env, &ffi_type_sint32,1);
+  ftmap["uint64"] = WrapPointer(env, &ffi_type_uint64,1);
+  ftmap["int64"] = WrapPointer(env, &ffi_type_sint64,1);
+  ftmap["uchar"] = WrapPointer(env, &ffi_type_uchar,1);
+  ftmap["char"] = WrapPointer(env, &ffi_type_schar,1);
+  ftmap["ushort"] = WrapPointer(env, &ffi_type_ushort,1);
+  ftmap["short"] = WrapPointer(env, &ffi_type_sshort,1);
+  ftmap["uint"] = WrapPointer(env, &ffi_type_uint,1);
+  ftmap["int"] = WrapPointer(env, &ffi_type_sint,1);
+  ftmap["float"] = WrapPointer(env, &ffi_type_float,1);
+  ftmap["double"] = WrapPointer(env, &ffi_type_double,1);
+  ftmap["pointer"] = WrapPointer(env, &ffi_type_pointer,1);
   // NOTE: "long" and "ulong" get handled in JS-land
   // Let libffi handle "long long"
-  ftmap["ulonglong"] = WrapPointer(env, &ffi_type_ulong);
-  ftmap["longlong"] = WrapPointer(env, &ffi_type_slong);
+  ftmap["ulonglong"] = WrapPointer(env, &ffi_type_ulong,1);
+  ftmap["longlong"] = WrapPointer(env, &ffi_type_slong,1);
 
   target["FFI_TYPES"] = ftmap;
 }
