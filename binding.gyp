@@ -12,7 +12,7 @@
       "<!@(node -p \"require('ref-napi/lib/get-paths').include\")",
     ],
     'dependencies': [
-      "<!(node -p \"require('node-addon-api').gyp\")",
+      "<!@(node -p \"require('node-addon-api').gyp\")",
       "deps/libffi/libffi.gyp:ffi"
     ],
     'cflags!': [ '-fno-exceptions' ],
