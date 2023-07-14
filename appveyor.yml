@@ -1,5 +1,8 @@
 # http://www.appveyor.com/docs/appveyor-yml
 
+image:
+  - Visual Studio 2022
+
 # Test against these versions of Node.js.
 environment:
   # Test against these versions of Node.js and io.js
@@ -31,7 +34,7 @@ test_script:
   - npm test
 
 after_test:
-  - ps: If ($env:nodejs_version -eq "12") { npm run prebuild --v8_enable_pointer_compression=false --v8_enable_31bit_smis_on_64bit_arch=false }
+  - ps: If ($env:nodejs_version -eq "20") { npm run prebuild --v8_enable_pointer_compression=false --v8_enable_31bit_smis_on_64bit_arch=false }
 
 # Don't actually build.
 build: off
@@ -52,4 +55,4 @@ deploy:
     auth_token: $(PREBUILD_GITHUB_TOKEN)
     on:
       appveyor_repo_tag: true
-      nodejs_version: "12"
+      nodejs_version: "20"
