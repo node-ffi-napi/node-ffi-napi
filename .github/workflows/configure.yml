@@ -10,14 +10,14 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
-          python-version: 3.9
-      - uses: actions/setup-node@v2
+          python-version: 3.12
+      - uses: actions/setup-node@v4
         with:
-          node-version: '14'
+          node-version: '21'
       - name: install dependencies and test
         shell: bash
         run: |
