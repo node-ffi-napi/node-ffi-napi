@@ -1,0 +1,51 @@
+# Recommendations:
+# * Do not run `npm test`
+# * macOS and Ubuntu: Node.js v20.x and Python 3.12
+# * Windows: Node.js v16.x and Python 3.11 -- Do not run `node-gyp rebuild`
+#
+# Lessons learned:
+# 1. Node.js >= v21 fails
+# 2. Node.js >= 18 fails on Windows
+# 3. Python >= 3.12 fails on Node.js 16 because of distlib fixed in node-gyp v10.0
+# 4. `npm test` fails with: npm ERR! Missing script: "test"
+# 5. `node-gyp rebuild` fails on Node.js 16
+
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  ci:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x]  # , latest] Node.js >= 21 fails
+        os: [ubuntu-latest, macos-latest]
+        python-version: [3.12]
+        include:  # Node.js > 16.x fails on Windows
+          - node-version: 16.x
+            os: windows-latest
+            python-version: 3.11
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:  # Python >= 3.12 fails on Node.js 16 because of distlib fixed in node-gyp v10.0
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: |
+          node-gyp --version || true
+          npm install --global node-gyp
+          node-gyp --version
+        shell: bash
+      - run: |
+          npm install
+          npm test || true  # npm ERR! Missing script: "test"
+        shell: bash
+      - run: node-gyp configure
+        shell: bash
+      - if: matrix.node-version != '16.x'
+        run: node-gyp rebuild
+        shell: bash
