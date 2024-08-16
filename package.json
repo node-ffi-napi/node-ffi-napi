@@ -27,9 +27,9 @@
   "main": "./lib/ffi",
   "dependencies": {
     "debug": "^4.1.1",
-    "get-uv-event-loop-napi-h": "^1.0.5",
-    "node-addon-api": "^3.0.0",
-    "node-gyp-build": "^4.2.1",
+    "get-uv-event-loop-napi-h": "github:bmatusiak/get-uv-event-loop-napi-h",
+    "node-addon-api": "^8.1.0",
+    "node-gyp-build": "^4.8.1",
     "ref-napi": "^2.0.1 || ^3.0.2",
     "ref-struct-di": "^1.1.0"
   },
